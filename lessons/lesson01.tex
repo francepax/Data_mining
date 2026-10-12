@@ -1,0 +1,61 @@
+\section{Lesson 01 --- 22/09/26}
+
+We start by getting to know the data, how are they represented, which different type we have some basic statistical descriptions and useful data visualization. We will then introduce the concept of similarity and dissimilarity using the similarity matrix.
+
+\subsection{Representation and types}
+Data sets are made up of \g{data objects}, a data object represents an entity and are typically described by \g{attributes}. The \g{type} of an attribute is determined by the set of possible values the attribute can have.
+
+\begin{itemize}
+    \item \g{Nominal attributes}: the value of nominal attribute are symbols or names of things, each value represents some kind of category or state and there isn't any meaningful ordering.
+    \item \g{Binary attributes}: it's a nominal attribute with only two category or state (0 and 1). Can be \s{simmetric} if both states equally matter or \s{asymmetric} if one state is more informative or rare then the other.
+    \item \g{Ordinal attributes}: the different values have a meaningful order or \s{ranking} but the gaps between successive values are not quantified. 
+    \item \g{Numeric attributes}: a numeric attribute is \s{quantitive} and we can measure its quantity and represents it with integer or real values. Numeric attributes can be \g{Intervale-scaled}, if they are measured on an equal-size unites scale without a true 0, or \g{Ratio-scaled}, if there is an inherent zero-point and we can measure a value as being a multiple of another value.
+\end{itemize}
+
+In data mining also we categorize attributes as being either \s{discrete} or \s{continuos}. A \g{discrete attribute} as a finite or countably infinite set of values. An attribute is countably infinite if the set of possible values is infinite but the values can be put in a one-to-one correspondence with natural numbers.
+If an attribute is not discrete, it is \g{continuos}, and it is typically represented as a floating-point variable.
+
+\subsection{Statistical description of data}
+
+A basic statistical description is essential to have an overall picture of the data and can be used to identify properties, valuable data, noise and outliers. 
+
+\subsubsection{Central tendency}
+We will se various ways to measure the central tendency of data that include the mean, median and mode.
+The most common measure of the "center" of a set of data is the \g{arithmetic mean}. Let $x_1,x_2,\dots,x_N$ be a set of $N$ values, the arithmetic mean is
+\[
+    \bar{x}=\frac{x_1+x_2+\dots+x_N}{N}=\frac{\sum_{i=1}^{N}x_i}{N}.
+\]
+
+Sometimes, each value $x_i$ in a set may be associated with a weight $w_i$ that reflects the significance,importance or frequency attached to their respective values. In this case we can compute the \g{weighted mean} as
+\[
+    \bar{x}=\frac{w_1x_1+w_2x_2+\dots+w_Nx_N}{w_1+w_2+\dots+w_N}=\frac{\sum_{i=1}^{N}w_ix_i}{\sum_{i=1}^{N}w_i}.
+\]
+
+Although the mean is the single most useful quantity for describing a data set, it's sensitive to extreme values (e.g. outliers). We can instead use the \g{trimmed mean}, which is the arithmetic mean obtained after chopping off extreme high and low values.
+
+For asymmetric data, a better measure of the center of data is the \g{median}, which is the middle value in a set of ordered values. It generally applies to numeric data but we can extend the concept to ordinal data.
+
+\s{Mode} is another measure of central tendency. The \g{mode} for a set of data is the value that occurs most frequently in the set. It works for nominal data where we can identify more then one mode, the distribution can be unimodal, bimodal or multimodal.
+
+\subsubsection{Measuring the dispersion of data}
+We can measure teh dispersion or spread of data through p\g{percentiles} and \g{quartiles}. The $k^{th}$ percentile is the value such that approximately $k\%$ of observations lie at or below it. Quantiles are points taken at regular intervals of data distribution, dividing it into equal-size consecutive sets. For example the 4-quantiles(\g{quartiles}) are the three data points that split the data distribution into four equal parts; each part represents one-fourth of the data distribution. We ca use quantile plot to visualize information on the distribution: sort the observations from smallest to largest; plot each value against a cumulative fraction $f$; read quartiles at $f=0.25,f=0,50\  \text{and}\  f=0.75$
+
+To visualize distribution it's also commonly used teh \g{box plot}:
+\begin{itemize}
+    \item The ends of the box are the quartiles (Q1 and Q3)
+    \item The median is marked by a line in the box
+    \item Two lines (called whiskers) outside the box extend to the smallest and largest observations.
+\end{itemize}
+
+Typically whiskers are extended within 1,5xIQR(Inter Quartile Range) and points beyond the whiskers are plotted individually and they represent the outliers.
+
+To quantify spread around the mean we can use \g{variance} adn \g{standard deviation}. The variance of $N$ observations $x_1,x_2,x,\dots,x_N$ is:
+\[
+    \sigma^2 = \frac{1}{N} \sum_{i=1}^{N}(x_i - \mu)^2
+\]
+where $\mu$ is the mean, squaring prevents positive and negative deviations from cancelling out. The standard deviations, $\sigma$, is the square root of the variance. Because both depend on the mean, variance and standard variation can be strongly influenced by outliers.
+
+\subsection{Similarity and dissimilarity}
+
+In data mining applications, such as clustering, outlier analysis, and nearest-neighbor classification, we
+need ways to assess how alike or unalike objects are in comparison to one another. Similarity and dissimilarity are both measure of \s{proximity}.

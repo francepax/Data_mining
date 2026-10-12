@@ -1,0 +1,74 @@
+\section{Data pre-processing -- lesson 29/09/2026}
+
+Main tasks we need to perform in pre-processing:
+\begin{itemize}
+    \item \textbf{Cleaning:} remove NaN values and noise, look for outliers or inconsistencies and deal with them.
+    \item \textbf{Integration:} combine data sources to resolve inconsistencies or conflicts.
+    \item \textbf{Reduction:} keep a smaller representation, without losing generality.
+    \item \textbf{Transformation:} scale, aggregate or construct features.
+\end{itemize}
+After this steps the data are ready for the models.
+
+
+\subsection{Data cleaning}
+It's very frequent to have missing information, noise or inconsistencies, especially if we have redundancy in the dataset.
+\subsubsection{Missing values}
+\begin{itemize}
+    \item \textbf{Remove the rows with missing values.} If the number of missing values is small, this does not affect the overall analysis.
+    \item \textbf{Manual filling.} If the number of missing values is small, we can fill them in manually.
+    \item \textbf{Replace with a global constant.} Each missing value is replaced with the same constant (not ideal).
+    \item \textbf{Replace with the mean or median of the column.} Better than a constant.
+    \item \textbf{Predict the missing values.} Build a model that uses the other features as input (the best option, but more complex).
+\end{itemize}
+Usually the most used solution is to replace the missing values with the mean or median of the column, but only if we have few missing values.
+
+\subsubsection{Noise and smoothing}
+In real datasets, we can have noise, which is a random error or variance in the data. We can use smoothing techniques to remove noise from the data. 
+The true signal change smoothly, while noise appears as rapid random changes. We can apply same smoothing techniques to remove noise from the data. Thera are some risk in smoothing, beaccause we can remove noise and at the same time distort the signal.\\
+\\
+
+\textbf{Rectangular smoothing filter}:\\
+we consider a window of size $k$(usually odd) and we replace the value of the point in the middle of the window with the average of the values in the window. Then we move the window of one position and we repeat the same operation. With this technique we can remove noise by reducing the variance between the samples.
+The main parameter of this technique is the size of the window, the narrower the window the less smoothing we have, the wider the window the more smoothing we have.  
+\\
+
+\textbf{Savitzky-Golay smoothing filter}:\\
+This technique is based on polynomial regression. We consider a window of size $k$ and , instead of a linear regression like in rectangular smoothing, we replace each data value by a linear combination of the values in the window:
+\[
+    S_j=\sum_{n=-n_l}^{n_r} c_nY_{j+n},
+\] 
+
+Where $n_l$ and $n_r$ are the number of points to the left and right of the point $j$. For each point $Y_j$ we least-squares fit a polynomial to alle the points in the window and set $S_j$ to the value of the polynomial.
+In general the larger the smoothing window, the greater the noise reduction, but the greater the risk of distorting the signal. For peak-type signals, increasing the smoothing ratio(the ratio between the smoothing window size and the number of points in the half-width of the peak) improves the signal-to-noise ratio, but cause a reduction in amplitude.
+\\
+
+Other ways of deal with noisy data:
+\begin{itemize}
+    \item \textbf{Binning}: sort data, divide them in equal bins and smooth by bin mean, median or boundaries,
+    \item  \textbf{Regression}: fit a regression model to the data and use it to predict the value of the data points,
+    \item \textbf{Inspection}: Clustering and human review to spot and remove outlier or suspicious values.    
+\end{itemize}
+
+
+\subsection{Data integration}
+The main integration problems are:
+\begin{itemize} 
+    \item \textbf{Entity identification problem:} we have to identify if two different objects in different databases are the same real-world entity. 
+    \item \textbf{Conflict resolution problem:} we have to resolve conflicts in attribute values for the same real-world entity.
+    
+\end{itemize}
+
+
+\subsection{Redundancy}
+
+Redundant data can slow data mining. we can have redundancy not only with attribute with the same value but also if twu attributes have the same trend and are \textbf{strongly correlated}.
+To understand if two attributes (only nominal attribute) are correlated we can use the \textbf{chi-square test}. 
+The chi-square test is a statistical test that measures the association between two categorical variables by using the contingency table. The contingency table
+contains the observed frequencies $o_{ij}$ of the combinations of the two variables. The chi-square statistic is calculated as:
+\[ X^2 = \sum_{i=1}^{r} \sum_{j=1}^{c} \frac{(o_{ij} - e_{ij})^2}{e_{ij}} \]
+Where $r$ is the number of rows, $c$ is the number of columns, and $e_{ij}$ is the expected frequency for cell $(i,j)$ under the null hypothesis of independence. The expected frequency is calculated as:
+\[ e_{ij} = \frac{(count(A=a_i)) \times (count(B=b_j))}{n} \]
+Where A and B are the two attributes we are testing for independence, $a_i$ and $b_j$ are the specific values of A and B.
+\\
+
+The chi-square is a type of probability distribution that is used in hypothesis testing to determine independence. \textbf{The null hypothesis} state that no association exists between the two variables, while \textbf{the alternative hypothesis} states that an association exists. 

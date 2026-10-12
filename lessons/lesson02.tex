@@ -9,18 +9,61 @@ Main tasks we need to perform in pre-processing:
 \end{itemize}
 After this steps the data are ready for the models.
 
+The tasks are interconnected and the pipeline is not strictly sequential: for example cleaning often comes back after integration, because merging different sources can create new inconsistencies and redundancies.
+
+Pre-processing matters because the same raw table can lead to different models depending on how we represent it:
+\begin{itemize}
+    \item \textbf{Algorithms:} clustering, outlier detection and nearest neighbors are based on distances, so an unscaled or noisy attribute can dominate the result.
+    \item \textbf{Databases:} data usually come from multiple sources, which can name the same attribute differently (\g{cust\_id} vs. \g{customer\_id}) or the same person differently (Bill vs. William).
+    \item \textbf{Decisions:} pre-processing reduces storage and computation, and makes the results of the mining more interpretable and robust.
+\end{itemize}
+
+\subsection{Data quality}
+Data have quality if they satisfy the requirements of the intended use, so quality is not an absolute property: the same database can be good enough for one user and inaccurate for another one. Bad data can look clean if we check only one dimension, so we have to consider all of them:
+\begin{itemize}
+    \item \textbf{Accuracy:} are the values correct, and are the measurements accurate enough for the task? Wrong values come from faulty instruments, human or computer errors at data entry, errors in transmission, inconsistent formats or naming conventions. Errors in the unit of measure can be more harmful than missing values.
+    \item \textbf{Completeness:} are all the relevant values recorded? Values can be unavailable, not entered because they were not considered important at the time, or deleted because they were inconsistent with other records.
+    \item \textbf{Timeliness:} are the updates timely for the intended analysis? Data that will be correct only after late corrections arrive are of low quality in the meantime.
+    \item \textbf{Consistency:} do the records obey the same codes and rules?
+    \item \textbf{Believability:} how much the data are trusted by the users.
+    \item \textbf{Interpretability:} how easily the data are understood by analysts and algorithms.
+\end{itemize}
+\begin{remark}
+    A particular source of inaccuracy is the \s{disguised missing data}: when a field is mandatory, users that do not want to give the information leave the default value (for example ``January 1'' as birthday). The value is formally present, but it is actually a missing value.
+\end{remark}
+
 
 \subsection{Data cleaning}
 It's very frequent to have missing information, noise or inconsistencies, especially if we have redundancy in the dataset.
+These problems are not exceptions, they are the normal case in real-world data, which can be:
+\begin{itemize}
+    \item \textbf{Incomplete:} attribute values are lacking, relevant attributes are lacking, or only aggregate data are available (e.g. \g{Occupation} left blank).
+    \item \textbf{Noisy:} the data contain random errors or outliers, due to faulty instruments or to data entry and transmission problems (e.g. \g{Salary = -10}).
+    \item \textbf{Inconsistent:} codes or records are in conflict (e.g. \g{Age = 42} but \g{Birthday = 03/07/2010}, ratings that changed from 1,2,3 to A,B,C, duplicate records that disagree).
+\end{itemize}
 \subsubsection{Missing values}
 \begin{itemize}
     \item \textbf{Remove the rows with missing values.} If the number of missing values is small, this does not affect the overall analysis.
     \item \textbf{Manual filling.} If the number of missing values is small, we can fill them in manually.
     \item \textbf{Replace with a global constant.} Each missing value is replaced with the same constant (not ideal).
     \item \textbf{Replace with the mean or median of the column.} Better than a constant.
+    \item \textbf{Replace with the mean or median of the same class.} We use only the samples that belong to the same class as the given tuple: for example, if we classify customers by credit risk, a missing income is replaced with the mean income of the customers in the same risk category. Smarter than the global mean.
     \item \textbf{Predict the missing values.} Build a model that uses the other features as input (the best option, but more complex).
 \end{itemize}
 Usually the most used solution is to replace the missing values with the mean or median of the column, but only if we have few missing values.
+
+Some caveats on these methods:
+\begin{itemize}
+    \item \textbf{Removing the tuple} is usually done when the class label is missing (in a classification task). It is not very effective unless the tuple has several missing attributes, because we throw away also the values that are present, and it is risky when the percentage of missing values varies a lot from attribute to attribute.
+    \item \textbf{Manual filling} is accurate but tedious, and usually not feasible on a large dataset.
+    \item \textbf{A global constant} (a label like ``Unknown'' or $-\infty$) can introduce an artifact: all the filled tuples share the same value, so the mining algorithm may think that they form an interesting concept or a new class.
+    \item \textbf{Mean or median:} we use the mean when the distribution of the attribute is symmetric, and the median when it is skewed, since the mean is pulled by the extreme values.
+    \item \textbf{The most probable value} can be obtained with regression, with inference based on a Bayesian formalism or with a decision tree built on the other attributes.
+\end{itemize}
+All the methods that fill in a value bias the data, because the filled-in value may not be the correct one. Predicting the value is the one that uses the most information from the data we have, so there is a greater chance to preserve the relationships between the attribute and the other ones.
+\begin{remark}
+    A missing value is not always an error. For example, in a credit card application the field for the driver's license number is naturally left blank by who does not have a license. For this reason each attribute should have a rule for the \s{null} condition (are nulls allowed? how are they recorded?), with an explicit value like ``not applicable''.
+\end{remark}
 
 \subsubsection{Noise and smoothing}
 In real datasets, we can have noise, which is a random error or variance in the data. We can use smoothing techniques to remove noise from the data. 
@@ -29,39 +72,146 @@ The true signal change smoothly, while noise appears as rapid random changes. We
 
 \textbf{Rectangular smoothing filter}:\\
 we consider a window of size $k$(usually odd) and we replace the value of the point in the middle of the window with the average of the values in the window. Then we move the window of one position and we repeat the same operation. With this technique we can remove noise by reducing the variance between the samples.
-The main parameter of this technique is the size of the window, the narrower the window the less smoothing we have, the wider the window the more smoothing we have.  
+It is also called \s{unweighted sliding-average smooth}, and the size of the window is called \s{smooth width}. For example, with a smooth width of 3 points:
+\[
+    S_j=\frac{Y_{j-1}+Y_j+Y_{j+1}}{3}, \qquad j=2,\dots,n-1,
+\]
+where $S_j$ is the $j$-th point of the smoothed signal, $Y_j$ is the $j$-th point of the original signal and $n$ is the total number of points (the first and the last point do not have a complete window).
+The filter preserves the local value of the signal where the underlying signal is constant or linear, because there the errors of the neighbors on the two sides compensate. Around peaks and valleys, instead, the neighbors have different values, so the average reduces the local maxima and raises the local minima.
+\begin{example}[Rectangular smoothing]
+    Consider the signal $Y=(2,4,9,4,2)$, with a peak in the middle. With a smooth width of 3 we get
+    \[
+        S_2=\frac{2+4+9}{3}=5, \qquad S_3=\frac{4+9+4}{3}\approx 5.67, \qquad S_4=\frac{9+4+2}{3}=5,
+    \]
+    so the peak is lowered from 9 to 5.67 and its neighbors are raised from 4 to 5. With a smooth width of 5 the peak becomes $S_3=21/5=4.2$: the wider the window, the more the peak is flattened. On a linear signal such as $Y=(1,2,3)$ we get instead $S_2=2=Y_2$, the value is preserved.
+\end{example}
+The main parameter of this technique is the size of the window, the narrower the window the less smoothing we have, the wider the window the more smoothing we have.
+For example, on a noisy step signal an 11-point moving average still leaves some noise but keeps the edges of the step sharp, while a 51-point moving average removes almost all the noise but turns the edges into slow ramps.
 \\
 
 \textbf{Savitzky-Golay smoothing filter}:\\
-This technique is based on polynomial regression. We consider a window of size $k$ and , instead of a linear regression like in rectangular smoothing, we replace each data value by a linear combination of the values in the window:
+This technique is based on polynomial regression. We consider a window of size $k$ and , instead of a plain average like in rectangular smoothing, we replace each data value by a linear combination of the values in the window:
 \[
     S_j=\sum_{n=-n_l}^{n_r} c_nY_{j+n},
 \] 
 
 Where $n_l$ and $n_r$ are the number of points to the left and right of the point $j$. For each point $Y_j$ we least-squares fit a polynomial to alle the points in the window and set $S_j$ to the value of the polynomial.
+
+The formula above is the general form of the simplest digital filter (nonrecursive, or \s{finite impulse response}, filter), and the two filters differ only in the coefficients $c_n$. The rectangular filter is the special case in which all the coefficients are equal:
+\[
+    c_n=\frac{1}{n_l+n_r+1}.
+\]
+The average is the best estimate of the signal in the window if we approximate it with a constant. The idea of Savitzky-Golay is to approximate the underlying function in the window with a polynomial of higher order $M$, typically quadratic or quartic, so that the coefficients $c_n$ preserve the higher moments of the signal (height and width of the peaks) and not only its mean.
+
+Fitting a polynomial for every point would be laborious, but we do not need to do it. Least-squares fitting involves only a linear matrix inversion, so the coefficients of the fitted polynomial are linear in the data values. As a consequence the value of the fitted polynomial in $j$ is a fixed linear combination of the samples in the window: the $c_n$ depend only on the order $M$ and on the window ($n_l$, $n_r$), not on the data, and they are computed once. Some examples (the coefficient of $Y_j$ is in bold):
+\begin{center}
+\begin{tabular}{cccl}
+\toprule
+$M$ & $n_l$ & $n_r$ & $c_{-n_l},\dots,c_{n_r}$ \\
+\midrule
+2 & 2 & 2 & $-0.086,\ 0.343,\ \mathbf{0.486},\ 0.343,\ -0.086$ \\
+2 & 4 & 0 & $0.086,\ -0.143,\ -0.086,\ 0.257,\ \mathbf{0.886}$ \\
+4 & 4 & 4 & $0.035,\ -0.128,\ 0.070,\ 0.315,\ \mathbf{0.417},\ 0.315,\ 0.070,\ -0.128,\ 0.035$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+The weights are not uniform: the central points count more and the points at the border of the window can have a negative weight. The window does not have to be symmetric (second row: only past values are used).
+\begin{example}[Savitzky-Golay vs. rectangular]
+    On the signal $Y=(2,4,9,4,2)$ of the previous example, the filter with $M=2$ and $n_l=n_r=2$ gives
+    \[
+        S_3=-0.086\cdot 2+0.343\cdot 4+0.486\cdot 9+0.343\cdot 4-0.086\cdot 2\approx 6.77,
+    \]
+    while the rectangular filter on the same 5 points gives $4.2$. With the same window the Savitzky-Golay filter keeps the peak much closer to its original height.
+\end{example}
+The same happens on real signals: with a window of 33 points the sliding average strongly lowers and widens the narrow peaks, while a Savitzky-Golay filter of degree 4 with the same window follows their height and width much better (but its output is a bit less smooth).
+
 In general the larger the smoothing window, the greater the noise reduction, but the greater the risk of distorting the signal. For peak-type signals, increasing the smoothing ratio(the ratio between the smoothing window size and the number of points in the half-width of the peak) improves the signal-to-noise ratio, but cause a reduction in amplitude.
+Together with the reduction in amplitude we have an increase in the bandwidth of the peak (the peak becomes lower and wider), and nearby peaks may merge. The optimum smooth width depends on the width and shape of the signal and on the digitization interval.
 \\
+
+What matters is the smoothing ratio and not the size of the window alone. With windows of 7, 25 and 51 points, on a peak with a half-width of 80 points the ratios are $7/80=0.09$, $25/80=0.31$ and $51/80=0.64$ and the peak is only slightly lowered; on a peak with a half-width of 33 points the same windows give $7/33=0.21$, $25/33=0.76$ and $51/33=1.55$, and with the last one the peak is reduced to about half of its height.
+
+How to choose the smoothing ratio depends on what we want to measure:
+\begin{itemize}
+    \item \textbf{True peak height and width:} we should use smoothing ratios below $0.2$.
+    \item \textbf{Peak position} (the value on the $x$ axis): we can use much larger smoothing ratios, because smoothing has no effect on the position of the peak, unless the peak becomes so wide that adjacent peaks overlap.
+\end{itemize}
+
+Smoothing is a modeling choice, we should apply it only when it supports the objective and not by default:
+\begin{itemize}
+    \item \textbf{Yes, for visual inspection:} to make the broad structure easier to see and to show a signal without the distracting high-frequency noise.
+    \item \textbf{Yes, before some algorithms:} when the later processing is harmed by high-frequency noise, e.g. detecting zero-crossings in derivatives or locating maxima, minima and inflection points.
+    \item \textbf{No, before statistical fitting:} the accuracy of the least-squares parameters usually does not improve, the residuals become harder to interpret, the smoothed noise may look like real signal and the errors on the parameters may be underestimated.
+\end{itemize}
 
 Other ways of deal with noisy data:
 \begin{itemize}
     \item \textbf{Binning}: sort data, divide them in equal bins and smooth by bin mean, median or boundaries,
     \item  \textbf{Regression}: fit a regression model to the data and use it to predict the value of the data points,
-    \item \textbf{Inspection}: Clustering and human review to spot and remove outlier or suspicious values.    
+    \item \textbf{Inspection}: Clustering and human review to spot and remove outlier or suspicious values.
 \end{itemize}
+
+In \textbf{binning} each sorted value is smoothed by looking at its neighborhood, i.e. the values in the same bin, so it is a \s{local} smoothing. The bins can be \s{equal-frequency} (each bin contains the same number of values) or \s{equal-width} (each bin covers an interval of the same size). Then we can smooth by \s{bin means} (each value is replaced by the mean of its bin), by \s{bin medians}, or by \s{bin boundaries} (each value is replaced by the closest between the minimum and the maximum of its bin). The larger the bins, the greater the smoothing.
+\begin{example}[Binning]
+    Sorted data for \g{price}: $4, 8, 15, 21, 21, 24, 25, 28, 34$, partitioned into equal-frequency bins of size 3.
+    \begin{center}
+    \begin{tabular}{lcccc}
+    \toprule
+     & values & bin means & bin medians & bin boundaries \\
+    \midrule
+    Bin 1 & $4, 8, 15$ & $9, 9, 9$ & $8, 8, 8$ & $4, 4, 15$ \\
+    Bin 2 & $21, 21, 24$ & $22, 22, 22$ & $21, 21, 21$ & $21, 21, 24$ \\
+    Bin 3 & $25, 28, 34$ & $29, 29, 29$ & $28, 28, 28$ & $25, 25, 34$ \\
+    \bottomrule
+    \end{tabular}
+    \end{center}
+    For example in bin 1 the mean is $(4+8+15)/3=9$, and with the boundaries $8$ becomes $4$ because it is closer to $4$ than to $15$.
+\end{example}
+In \textbf{regression} we conform the data to a function: with linear regression we find the best line that fits two attributes, so that one can be used to predict the other; with multiple linear regression we use more than two attributes and the data are fit to a multidimensional surface. For the \textbf{inspection}, clustering organizes similar values in groups, and the values that fall outside of all the clusters can be considered outliers; the automatic detection should be combined with checks based on the knowledge of the domain.
+
+\subsubsection{Data cleaning as a process}
+Cleaning is not a single operation: detection, correction and verification should be explicit steps, and they are iterated.
+\begin{itemize}
+    \item \textbf{Detect discrepancies:} we use the \s{metadata} (the knowledge we already have about the data), such as the domain, the range, the dependencies and the distribution of each attribute. For example, for a distribution similar to a Gaussian the values that are more than two standard deviations away from the mean can be flagged as potential outliers.
+    \item \textbf{Check rules:} the \s{uniqueness rule} says that each value of the attribute must be different from all the other values; the \s{consecutive rule} says that there are no missing values between the lowest and the highest value of the attribute (and all the values are unique, as in check numbers); the \s{null rule} specifies the use of blanks, question marks or other strings that indicate the null condition, and how these values have to be handled.
+    \item \textbf{Scrub:} we use simple domain knowledge (spell-check, postal code checks) to detect errors and make corrections.
+    \item \textbf{Audit:} we discover rules and relationships in the data and look for the values that violate them, e.g. with correlation analysis or with clustering to find outliers.
+    \item \textbf{Verify:} we check whether the corrections created new inconsistencies.
+\end{itemize}
+The process of detecting and correcting has to be repeated, because a correction can introduce new discrepancies and some discrepancies are \s{nested}, they can be seen only after others have been fixed: a typo like ``20010'' in a year field may surface only once all the dates have been converted to the same format.
 
 
 \subsection{Data integration}
+Data integration is the merging of data from multiple data stores (databases, data cubes, flat files) into a coherent store. If it is done carefully it reduces redundancies and inconsistencies in the resulting dataset, and this improves the accuracy and the speed of the mining.
+
 The main integration problems are:
-\begin{itemize} 
-    \item \textbf{Entity identification problem:} we have to identify if two different objects in different databases are the same real-world entity. 
+\begin{itemize}
+    \item \textbf{Schema integration problem:} the same attribute can have different names in different sources (e.g. \g{A.cust-id} $\equiv$ \g{B.cust-\#}), so we have to integrate the metadata of the sources.
+    \item \textbf{Entity identification problem:} we have to identify if two different objects in different databases are the same real-world entity.
     \item \textbf{Conflict resolution problem:} we have to resolve conflicts in attribute values for the same real-world entity.
-    
+
+\end{itemize}
+
+Some details on each of them:
+\begin{itemize}
+    \item To match schemas we use the metadata of each attribute: name, meaning, data type, range of the permitted values and null rules. They also tell us when the same information is coded differently (a payment type coded as ``H'' and ``S'' in one database and as 1 and 2 in another one).
+    \item We have to pay attention also to the \s{structure} of the data, so that functional dependencies and referential constraints of the source match those of the target. For example in one system a discount is applied to the whole order, in another one to each line item of the order: if we do not notice it, the items in the target system are discounted in the wrong way.
+    \item Entity identification requires matching that goes beyond the exact strings: Bill Clinton and William Clinton are the same person.
+    \item The values of the same entity can differ because of different representation, scaling or encoding: a weight in metric units in one system and in British imperial units in another; the price of a hotel room in different currencies, and including different services and taxes; grades from A+ to F in one university and from 1 to 10 in another. The attributes can also be at different levels of abstraction: \g{total\_sales} can refer to one branch in one database and to all the stores of a region in another one.
 \end{itemize}
 
 
 \subsection{Redundancy}
 
 Redundant data can slow data mining. we can have redundancy not only with attribute with the same value but also if twu attributes have the same trend and are \textbf{strongly correlated}.
+Redundancy does not only slow the mining, it also creates inconsistencies. It can come from:
+\begin{itemize}
+    \item \textbf{Different names:} the same attribute or object appears with different names in the sources; object identification removes this duplicated meaning.
+    \item \textbf{Derived data:} an attribute can be derived from another attribute or from a set of attributes, e.g. the annual revenue can be computed from the monthly revenue.
+    \item \textbf{Duplicated tuples:} two or more tuples describe the same data entry. It often happens with denormalized tables (used to avoid joins), and the duplicates can become inconsistent when only some of the occurrences are updated: the same purchaser's name may appear with different addresses.
+\end{itemize}
+Redundant attributes can be detected statistically with \s{correlation analysis}, that measures how strongly one attribute implies the other: for nominal attributes we use the chi-square test, for numeric attributes the correlation coefficient and the covariance.
+
 To understand if two attributes (only nominal attribute) are correlated we can use the \textbf{chi-square test}. 
 The chi-square test is a statistical test that measures the association between two categorical variables by using the contingency table. The contingency table
 contains the observed frequencies $o_{ij}$ of the combinations of the two variables. The chi-square statistic is calculated as:
@@ -69,6 +219,84 @@ contains the observed frequencies $o_{ij}$ of the combinations of the two variab
 Where $r$ is the number of rows, $c$ is the number of columns, and $e_{ij}$ is the expected frequency for cell $(i,j)$ under the null hypothesis of independence. The expected frequency is calculated as:
 \[ e_{ij} = \frac{(count(A=a_i)) \times (count(B=b_j))}{n} \]
 Where A and B are the two attributes we are testing for independence, $a_i$ and $b_j$ are the specific values of A and B.
+Here the $r$ values of A are the rows and the $c$ values of B are the columns of the table, $n$ is the total number of tuples, and the sum is computed over all the $r \times c$ cells (the slides and the book call $c$ the number of values of A and $r$ the number of values of B, the formula is the same).
+The expected frequency comes directly from the assumption of independence: $e_{ij}=n\cdot P(A=a_i,B=b_j)$ and, since A and B are independent, the joint probability is the product of the two marginal probabilities, that we estimate with the relative frequencies:
+\[
+    e_{ij}=n\cdot P(A=a_i)\cdot P(B=b_j)=n\cdot\frac{count(A=a_i)}{n}\cdot\frac{count(B=b_j)}{n}.
+\]
+So in every row (column) the sum of the expected frequencies is equal to the sum of the observed ones. The larger the value of $X^2$, the more likely the two variables are related, and the cells that contribute the most are those where the observed count is far from the expected one.
 \\
 
-The chi-square is a type of probability distribution that is used in hypothesis testing to determine independence. \textbf{The null hypothesis} state that no association exists between the two variables, while \textbf{the alternative hypothesis} states that an association exists. 
+The chi-square is a type of probability distribution that is used in hypothesis testing to determine independence. \textbf{The null hypothesis} state that no association exists between the two variables, while \textbf{the alternative hypothesis} states that an association exists.
+
+More precisely, under the null hypothesis $H_0$ (the two variables are statistically independent in the population) the statistic $X^2$ follows a $\chi^2$ distribution. The \textbf{p-value} is the probability, under $H_0$, of obtaining a value at least as large as the observed one, i.e. the area under the curve of the distribution to the right of the computed $X^2$.
+
+There is not a single $\chi^2$ distribution, the one we have to use depends on the \textbf{degrees of freedom}: the number of cells of the contingency table that can vary freely, given the row and column totals. For a table with $r$ rows and $c$ columns
+\[
+    df=(r-1)(c-1).
+\]
+For example, in a $2\times 2$ table with fixed totals, once we choose one cell the other three are determined ($df=1$); in a $2\times 3$ table we can choose two cells ($df=2$). All the $\chi^2$ distributions are asymmetric and skewed to the right, and their shape changes with the degrees of freedom.
+
+To decide we fix a \textbf{significance level} (a small value such as $0.05$, $0.01$ or $0.001$: the lower the significance level, the higher the confidence in the decision). We reject the null hypothesis when the computed $X^2$ is higher than the value in the table of the $\chi^2$ distribution for our degrees of freedom and significance level, or equivalently when the p-value is lower than the significance level. If we reject $H_0$ we say that A and B are statistically correlated. Some values of the table (probability of a larger value of $X^2$):
+\begin{center}
+\begin{tabular}{cccc}
+\toprule
+$df$ & $0.10$ & $0.05$ & $0.01$ \\
+\midrule
+1 & 2.71 & 3.84 & 6.63 \\
+2 & 4.61 & 5.99 & 9.21 \\
+3 & 6.25 & 7.81 & 11.34 \\
+4 & 7.78 & 9.49 & 13.28 \\
+5 & 9.24 & 11.07 & 15.09 \\
+\bottomrule
+\end{tabular}
+\end{center}
+For example with $X^2=5$ and $df=4$ the p-value is about $0.3$: we are below $7.78$, so we cannot reject independence.
+
+\begin{example}[Chi-square on a $2\times 2$ table]
+    In a group of 1500 people we record if they like science fiction and if they play chess. The expected frequencies are in parentheses.
+    \begin{center}
+    \begin{tabular}{lccc}
+    \toprule
+     & Play chess & Not play chess & Sum \\
+    \midrule
+    Like science fiction & 250 (90) & 200 (360) & 450 \\
+    Not like science fiction & 50 (210) & 1000 (840) & 1050 \\
+    Sum & 300 & 1200 & 1500 \\
+    \bottomrule
+    \end{tabular}
+    \end{center}
+    For example $e_{11}=\frac{450\times 300}{1500}=90$. Then
+    \begin{align*}
+        X^2&=\frac{(250-90)^2}{90}+\frac{(50-210)^2}{210}+\frac{(200-360)^2}{360}+\frac{(1000-840)^2}{840}\\
+        &=284.44+121.90+71.11+30.48=507.93.
+    \end{align*}
+    The degrees of freedom are $(2-1)(2-1)=1$. With $df=1$ the value needed to reject independence at the $0.001$ significance level is $10.828$: our value is far above it, so we reject $H_0$ and conclude that the two attributes are correlated in this group.
+\end{example}
+
+\begin{example}[Chi-square on a larger table]
+    We want to know if education level and marital status are related, using a simple random sample of $n=300$ people.
+    \begin{center}
+    \small
+    \begin{tabular}{lcccccc}
+    \toprule
+     & Middle school & High school & Bachelor's & Master's & PhD & Total \\
+    \midrule
+    Never married & 18 & 36 & 21 & 9 & 6 & 90 \\
+    Married & 12 & 36 & 45 & 36 & 21 & 150 \\
+    Divorced & 6 & 9 & 9 & 3 & 3 & 30 \\
+    Widowed & 3 & 9 & 9 & 6 & 3 & 30 \\
+    Total & 39 & 90 & 84 & 54 & 33 & 300 \\
+    \bottomrule
+    \end{tabular}
+    \end{center}
+    The expected frequencies are computed from the totals, e.g. for (never married, middle school) $e_{11}=\frac{90\times 39}{300}=11.7$ and for (never married, high school) $e_{12}=\frac{90\times 90}{300}=27$. Summing over the 20 cells:
+    \[
+        X^2=\frac{(18-11.7)^2}{11.7}+\frac{(36-27)^2}{27}+\dots=23.57.
+    \]
+    The degrees of freedom are $(4-1)(5-1)=12$, and for the $\chi^2$ distribution with $df=12$ we have $P(\chi^2>23.6)=0.023$. The p-value is lower than $0.05$, so at this significance level we reject $H_0$: marital status and education are related in the population. With a stricter level such as $0.01$ we could not reject it.
+\end{example}
+
+\begin{remark}
+    Correlation is not causality: the test tells us that two attributes are related, not that one causes the other. The number of hospitals and the number of car thefts in a city are correlated, but only because both are causally linked to a third variable, the population.
+\end{remark}

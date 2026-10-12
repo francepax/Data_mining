@@ -15,6 +15,22 @@ Data sets are made up of \g{data objects}, a data object represents an entity an
 In data mining also we categorize attributes as being either \s{discrete} or \s{continuos}. A \g{discrete attribute} as a finite or countably infinite set of values. An attribute is countably infinite if the set of possible values is infinite but the values can be put in a one-to-one correspondence with natural numbers.
 If an attribute is not discrete, it is \g{continuos}, and it is typically represented as a floating-point variable.
 
+Data objects are also called \s{samples}, \s{examples}, \s{instances}, \s{data points} or \s{tuples}, while attributes are also called \s{dimensions}, \s{features} or \s{variables}. When the data are stored in a database, the rows correspond to the data objects and the columns to the attributes.
+
+The type of an attribute tells us which operations are meaningful on its values:
+\begin{itemize}
+    \item nominal (and binary): only equality tests and counting, so the only measure of central tendency we can use is the mode;
+    \item ordinal: we can also sort the values, so the median is defined too, but the mean is not;
+    \item interval-scaled: differences are meaningful and we can compute the mean, but ratios make no sense: $20^{\circ}$C is $10^{\circ}$C warmer than $10^{\circ}$C, but it is not ``twice as hot'';
+    \item ratio-scaled: ratios are meaningful as well (length, counts, money, temperature in Kelvin).
+\end{itemize}
+
+\begin{remark}
+Coding the categories of a nominal attribute as $0,1,2,\dots$ does not make it numeric: the codes carry no ordering and arithmetic on them is not meaningful (it makes no sense to subtract one customer ID from another). In the same way, an attribute stored as an ``integer'' in a database is not necessarily numeric in the statistical sense, as happens for ZIP codes.
+\end{remark}
+
+Focusing on attribute types is not a limitation. Complex raw data such as images, text, audio signals and sensor streams are first encoded as numbers (pixel matrices, tokens and counts, embeddings), and each resulting feature is still nominal, ordinal, interval or ratio: its scale tells us which mathematical operations remain valid once the data have been encoded.
+
 \subsection{Statistical description of data}
 
 A basic statistical description is essential to have an overall picture of the data and can be used to identify properties, valuable data, noise and outliers. 
@@ -37,8 +53,29 @@ For asymmetric data, a better measure of the center of data is the \g{median}, w
 
 \s{Mode} is another measure of central tendency. The \g{mode} for a set of data is the value that occurs most frequently in the set. It works for nominal data where we can identify more then one mode, the distribution can be unimodal, bimodal or multimodal.
 
+When the number $N$ of observations is even the median is not unique: by convention we take the average of the two middle values. Unlike the mean, the median is robust to extreme values, so we prefer it when the distribution is skewed or heavy-tailed; the mode is the right choice when frequency, and not arithmetic distance, is what matters.
+
+Comparing mean, median and mode reveals the \g{skewness} of a unimodal distribution:
+\begin{itemize}
+    \item \s{symmetric} data (balanced tails): mean $\approx$ median $\approx$ mode;
+    \item \s{positively skewed} data (longer right tail): mode $<$ median $<$ mean;
+    \item \s{negatively skewed} data (longer left tail): mean $<$ median $<$ mode.
+\end{itemize}
+
 \subsubsection{Measuring the dispersion of data}
-We can measure teh dispersion or spread of data through p\g{percentiles} and \g{quartiles}. The $k^{th}$ percentile is the value such that approximately $k\%$ of observations lie at or below it. Quantiles are points taken at regular intervals of data distribution, dividing it into equal-size consecutive sets. For example the 4-quantiles(\g{quartiles}) are the three data points that split the data distribution into four equal parts; each part represents one-fourth of the data distribution. We ca use quantile plot to visualize information on the distribution: sort the observations from smallest to largest; plot each value against a cumulative fraction $f$; read quartiles at $f=0.25,f=0,50\  \text{and}\  f=0.75$
+We can measure the dispersion or spread of data through p\g{percentiles} and \g{quartiles}. The $k^{th}$ percentile is the value such that approximately $k\%$ of observations lie at or below it. Quantiles are points taken at regular intervals of data distribution, dividing it into equal-size consecutive sets. For example the 4-quantiles(\g{quartiles}) are the three data points that split the data distribution into four equal parts; each part represents one-fourth of the data distribution. We ca use quantile plot to visualize information on the distribution: sort the observations from smallest to largest; plot each value against a cumulative fraction $f$; read quartiles at $f=0.25,f=0,50\  \text{and}\  f=0.75$
+
+More precisely, in a quantile plot the $i$-th sorted observation $x_i$ is plotted against
+\[
+    f_i=\frac{i-0.5}{N},
+\]
+which means that approximately $f_i\cdot 100\%$ of the data lie below $x_i$. The horizontal axis is therefore not time but the fraction of data at or below a value. Since the plot shows all the observations, jumps, clusters, gaps and outliers remain visible.
+
+The three quartiles are denoted by $Q_1$ (25th percentile), $Q_2$ (50th percentile, i.e. the median) and $Q_3$ (75th percentile). The distance between the first and the third quartile is the \g{interquartile range}
+\[
+    \mathit{IQR}=Q_3-Q_1,
+\]
+which summarizes the central $50\%$ of the data and is robust to extreme values.
 
 To visualize distribution it's also commonly used teh \g{box plot}:
 \begin{itemize}
@@ -49,13 +86,418 @@ To visualize distribution it's also commonly used teh \g{box plot}:
 
 Typically whiskers are extended within 1,5xIQR(Inter Quartile Range) and points beyond the whiskers are plotted individually and they represent the outliers.
 
+In detail, the usual rule of thumb treats as suspected outliers the values lying more than $1.5\cdot\mathit{IQR}$ below $Q_1$ or above $Q_3$, and the whiskers stop at the most extreme observations inside these limits. The box plot is thus a picture of the \g{five-number summary} of a distribution, which is made of $\mathit{Minimum}$, $Q_1$, $\mathit{Median}$, $Q_3$, $\mathit{Maximum}$.
+
+Drawing the box plots of several data sets side by side lets us compare the distributions at a glance, without showing every data point: the median line gives the typical value, the height of the box the spread of the middle $50\%$ of the values, the whiskers the overall spread and the isolated points the possible outliers.
+
 To quantify spread around the mean we can use \g{variance} adn \g{standard deviation}. The variance of $N$ observations $x_1,x_2,x,\dots,x_N$ is:
 \[
     \sigma^2 = \frac{1}{N} \sum_{i=1}^{N}(x_i - \mu)^2
 \]
 where $\mu$ is the mean, squaring prevents positive and negative deviations from cancelling out. The standard deviations, $\sigma$, is the square root of the variance. Because both depend on the mean, variance and standard variation can be strongly influenced by outliers.
 
+For a normal distribution the standard deviation has a direct reading, the \g{68-95-99.7 rule}: about $68\%$ of the values lie in the interval $\mu\pm\sigma$, about $95\%$ in $\mu\pm2\sigma$ and about $99.7\%$ in $\mu\pm3\sigma$. The rule is about intervals that are symmetric around the mean.
+
+\begin{example}[Salary data]
+Consider the following $N=12$ salaries (in thousands of dollars), already sorted:
+\[
+    30,\ 36,\ 47,\ 50,\ 52,\ 52,\ 56,\ 60,\ 63,\ 70,\ 70,\ 110.
+\]
+\begin{itemize}
+    \item Mean: $\bar{x}=696/12=58$.
+    \item Median: $N$ is even, so we average the 6th and the 7th value, $(52+56)/2=54$.
+    \item Mode: the data are bimodal, with modes $52$ and $70$.
+    \item Quartiles: $Q_1=(47+50)/2=48.5$ and $Q_3=(63+70)/2=66.5$, hence $\mathit{IQR}=66.5-48.5=18$.
+    \item Variance: $\sigma^2=\frac{1}{12}\left(30^2+36^2+\dots+110^2\right)-58^2\approx 379.17$, hence $\sigma\approx 19.47$.
+\end{itemize}
+The mean is larger than the median because it is pulled up by the extreme value $110$. With the $1.5\cdot\mathit{IQR}$ rule every value above $66.5+27=93.5$ is a suspected outlier, so in a box plot $110$ would be plotted individually.
+\end{example}
+
+\subsubsection{Graphic displays}
+A distribution is described by its \s{center} (where are the typical values?), its \s{spread} (how variable are they?), its \s{shape} (symmetric, skewed, multimodal?) and its \s{tails} (are there outliers or rare events?). A single number is never the whole story, so we combine the statistics above with a visual inspection of the data. Quantile plots and box plots were introduced above; here we see the other common displays.
+
+A \g{histogram} summarizes the distribution of a numeric attribute: the range of values is partitioned into disjoint consecutive subranges, called \s{buckets} or \s{bins} and typically of equal width, and for each bin we draw a bar whose height is the number of observations falling in it. In a histogram we look for the number of modes, skewness, gaps, heavy tails and potential outliers, keeping in mind that its appearance is sensitive to the bin width. A histogram is different from a \s{bar chart}: the bars of a bar chart represent categories and can be reordered, while the bars of a histogram represent adjacent numeric intervals. Moreover it is the area of each bar that represents the value and not just its height, which matters when the bins have different widths.
+
+Histograms often tell more than box plots. A box plot summarizes position and spread, but it can hide shape, modes and gaps: an approximately uniform sample and a clustered, multimodal one can share the same five-number summary (e.g. $\mathit{Minimum}=0$, $Q_1=2$, $\mathit{Median}=4$, $Q_3=6$, $\mathit{Maximum}=8$) and so the same box plot, while their histograms are clearly different.
+
+A \g{quantile-quantile plot} (or \g{q-q plot}) graphs the quantiles of one univariate distribution against the corresponding quantiles of another, so we can see whether there is a shift going from one distribution to the other. Given two sorted samples $x_1,\dots,x_N$ and $y_1,\dots,y_M$, if $M=N$ we simply plot $y_i$ against $x_i$, since both are the $(i-0.5)/N$ quantiles of their data sets; if $M<N$ we plot only $M$ points, pairing $y_i$ with the $(i-0.5)/M$ quantile of the $x$ data, which usually has to be computed by interpolation. The diagonal line marks the case where the two distributions have equal values at each quantile: if, for example, most of the points lie above the diagonal, the distribution on the vertical axis tends to have higher values at the same percentiles.
+
+A \g{scatter plot} gives a first look at bivariate data: each pair of values of two numeric attributes is treated as a pair of coordinates and plotted as a point in the plane. It lets us see clusters of points and outliers and explore whether the two attributes are correlated. If the cloud of points slopes from lower left to upper right the association is \s{positive}, if it slopes from upper left to lower right it is \s{negative}, otherwise there is no clear linear association.
+
+\begin{remark}
+Correlation describes association, not causation. Moreover a zero linear correlation can still hide a nonlinear structure in the data.
+\end{remark}
+
+\subsection{Data visualization}
+
+Visualization is a reasoning tool. We use it to build an immediate qualitative \s{overview} of a large data set, to search for \s{patterns} (trends, clusters, structure and anomalies), for \s{diagnostics} (spotting data quality issues and choosing the parameters of later analyses) and for \s{communication}, since it makes the inputs, the outputs and the evidence of a model easier to inspect.
+
+Different families of techniques emphasize different aspects of high-dimensional data:
+\begin{itemize}
+    \item \g{Pixel-oriented}: one tiny mark per value.
+    \item \g{Geometric projection}: the dimensions are projected or arranged in a geometric space.
+    \item \g{Icon-based}: the attributes are mapped to the visual properties of a glyph.
+    \item \g{Hierarchical}: the space is partitioned according to a hierarchy of the dimensions.
+    \item \g{Complex relations}: the focus is on text, networks or linked structures.
+\end{itemize}
+
+\subsubsection{Pixel-oriented techniques}
+They are useful when there are too many values to draw each of them with a conventional mark. For a data set with $m$ dimensions we create $m$ windows on the screen, one for each dimension; the $m$ values of a record are mapped to $m$ pixels placed at the same position in each window, and the color of a pixel reflects the corresponding value. If, for example, the customers are sorted by income, the same pixel position in the windows of income, credit limit, transaction volume and age refers to the same customer. Because the ordering is fixed, dark or light areas that recur in several windows indicate a relationship between the attributes.
+
+\subsubsection{Geometric projection techniques}
+A \g{scatter-plot matrix} extends the scatter plot to several numeric attributes: it is a grid containing the scatter plot of every pair of attributes. It is a compact overview that we use to scan many pairs at once, to detect strong linear or nonlinear relationships, to identify clusters and outliers and to decide which individual scatter plots deserve a closer look.
+
+With \g{parallel coordinates} we draw one vertical axis per attribute, each scaled to the $[\mathit{minimum},\mathit{maximum}]$ range of its attribute, and every observation becomes a polyline that crosses each axis at the corresponding value. We look for bundles of similar lines, crossings, outlying trajectories and attributes that separate groups: parallel, bundled lines indicate similar profiles, while crossings between two axes suggest that the two attributes rank the objects differently. The strength of this technique is that it preserves the full high-dimensional record; its weakness is that it quickly becomes cluttered as the number of observations grows.
+
+\subsubsection{Icon-based techniques}
+\g{Chernoff faces} map the attributes to the features of a face, such as the size of the eyes, the curvature of the mouth and the angle of the eyebrows. Humans are very sensitive to facial patterns, but the interpretation is subjective.
+
+\g{Stick figures} map the attributes to the lengths and the angles of the limbs of a small figure. Typically two attributes define the position of the figure on the plane and the remaining ones are encoded by the body and the limbs: we read the single glyph for the individual values and the overall texture, created by the repeated glyphs, for patterns, clusters and unusual records in very dense multivariate data.
+
+In general every visual encoding introduces perceptual assumptions, and some variables are easier to compare than others.
+
+\subsubsection{Hierarchical techniques}
+\g{Dimensional stacking} uses nested two-dimensional partitions to show more than two attributes at once: we partition the first two attributes in a grid of cells and, inside each cell, we recursively partition the next two attributes. It works best for ordinal attributes and for binned numeric attributes with low or medium cardinality; the result depends strongly on the order of the dimensions and on the bin boundaries, and readability drops when the dimensions are many.
+
+A \g{tree-map} uses area to show the part-to-whole structure of hierarchical data: each rectangle is an item, its area encodes the magnitude, the nesting of the rectangles encodes the hierarchy and the color can encode a second variable. For example, if a node $A$ of value $200$ has two children $B=80$ and $C=120$, the rectangle of $A$ is split in two parts that cover $40\%$ and $60\%$ of its area, and each of them is split again among its own children. Tree-maps are well suited to file systems, portfolios, inventories and hierarchical categories.
+
+\subsubsection{Visualizing complex relations}
+A \g{tag cloud} is a visualization of text in which each word (or tag) is displayed with a size proportional to a chosen weight, usually its frequency. Typical sources are user-generated tags, keywords extracted from documents and open answers or comments. The largest tags reveal the dominant topics, but similar sizes allow only an approximate comparison and the position of a word has no precise meaning. A tag cloud does not show the relationships between words, their temporal order or the context in which a term appears: we use it for an overview and not for measurement.
+
 \subsection{Similarity and dissimilarity}
 
 In data mining applications, such as clustering, outlier analysis, and nearest-neighbor classification, we
 need ways to assess how alike or unalike objects are in comparison to one another. Similarity and dissimilarity are both measure of \s{proximity}.
+
+A \g{similarity} measure is a number that tells how alike two objects are: the larger the value, the more alike the objects. It is often normalized to $[0,1]$, where $0$ means that the objects are completely unalike and $1$ that they are identical. A \g{dissimilarity} (or \g{distance}) measure works the opposite way: the smaller the value, the more alike the objects. Its minimum is usually $0$, reached when the objects are the same, while the upper bound depends on the measure.
+
+\subsubsection{Data matrix and dissimilarity matrix}
+So far the objects were described by a single attribute. From now on we have $n$ objects described by $p$ attributes: object $i$ is $x_i=(x_{i1},x_{i2},\dots,x_{ip})$, where $x_{if}$ is its value for the $f$-th attribute. We work with two data structures.
+
+The \g{data matrix} (object-by-attribute structure) stores the $n$ objects as an $n\times p$ matrix, one row per object:
+\[
+    \begin{bmatrix}
+        x_{11} & \cdots & x_{1f} & \cdots & x_{1p}\\
+        \vdots &        & \vdots &        & \vdots\\
+        x_{i1} & \cdots & x_{if} & \cdots & x_{ip}\\
+        \vdots &        & \vdots &        & \vdots\\
+        x_{n1} & \cdots & x_{nf} & \cdots & x_{np}
+    \end{bmatrix}.
+\]
+
+The \g{dissimilarity matrix} (object-by-object structure) stores the proximities of all the pairs of objects as an $n\times n$ table:
+\[
+    \begin{bmatrix}
+        0      &        &        &   \\
+        d(2,1) & 0      &        &   \\
+        d(3,1) & d(3,2) & 0      &   \\
+        \vdots & \vdots & \vdots & \ddots \\
+        d(n,1) & d(n,2) & \cdots & \cdots & 0
+    \end{bmatrix}
+\]
+where $d(i,j)$ is the dissimilarity between objects $i$ and $j$: a nonnegative number, close to $0$ when the two objects are very similar and larger the more they differ. Since $d(i,i)=0$ and $d(i,j)=d(j,i)$, the matrix is symmetric and we write only its lower triangle.
+
+The data matrix contains two kinds of entities (objects on the rows, attributes on the columns) and is called a \s{two-mode} matrix, while the dissimilarity matrix contains only one kind and is called a \s{one-mode} matrix. Many clustering and nearest-neighbor algorithms operate on a dissimilarity matrix, so a data matrix must be transformed into a dissimilarity matrix before applying them. A similarity can often be obtained from a dissimilarity, for example as
+\[
+    sim(i,j)=1-d(i,j).
+\]
+How $d(i,j)$ is computed depends on the type of the attributes.
+
+\subsubsection{Proximity for nominal attributes}
+For nominal attributes we count the matches, without inventing an arithmetic distance between the codes of the categories. The dissimilarity between two objects $i$ and $j$ is the ratio of mismatches
+\[
+    d(i,j)=\frac{p-m}{p},
+\]
+where $m$ is the number of \s{matches}, i.e. the number of attributes for which $i$ and $j$ are in the same state, and $p$ is the total number of attributes. The corresponding similarity is
+\[
+    sim(i,j)=1-d(i,j)=\frac{m}{p}.
+\]
+
+\begin{example}
+Two objects are described by eye color, hair color and region. Object $i$ is (green, blond, north) and object $j$ is (green, black, north): there are $m=2$ matches out of $p=3$ attributes, so
+\[
+    d(i,j)=\frac{3-2}{3}\approx 0.33,\qquad sim(i,j)=\frac{2}{3}\approx 0.67.
+\]
+\end{example}
+
+An alternative is \g{one-hot encoding}: for a nominal attribute with $M$ states we create $M$ binary attributes, one for each state, and for a given object exactly one of them is set to $1$ (the one of its state) while the others are set to $0$. The encoded vectors are then compared with the measures for binary attributes of the next section. So a category such as ``eye = blue'' becomes the Boolean statement ``is the eye blue?''. The caveat is that, when the binary attributes are many, most of them are $0$ for both objects and these common zeros can inflate the similarity: we should either compare the matches at the level of the original attributes or choose a suitable binary coefficient, one that ignores the joint absences.
+
+\subsubsection{Proximity for binary attributes}
+Treating binary attributes as if they were numeric can be misleading, and symmetric and asymmetric attributes must be treated differently. Given two objects $i$ and $j$ described by $p$ binary attributes, we count the attributes in the four possible situations and we collect the counts in a contingency table:
+\begin{center}
+\begin{tabular}{c|cc}
+    \toprule
+              & $j=1$ & $j=0$ \\
+    \midrule
+    $i=1$     & $q$   & $r$   \\
+    $i=0$     & $s$   & $t$   \\
+    \bottomrule
+\end{tabular}
+\end{center}
+so $q$ is the number of attributes equal to $1$ for both objects, $r$ the number of those equal to $1$ for $i$ and $0$ for $j$, $s$ the number of those equal to $0$ for $i$ and $1$ for $j$, and $t$ the number of those equal to $0$ for both, with $p=q+r+s+t$. Hence $q+t$ are the matches and $r+s$ the mismatches.
+
+For \s{symmetric} binary attributes both states matter equally and we use the \g{symmetric binary dissimilarity} (simple matching distance)
+\[
+    d_{SMC}(i,j)=\frac{r+s}{q+r+s+t},
+\]
+whose complement $(q+t)/(q+r+s+t)$ is the \s{simple matching coefficient} (SMC).
+
+For \s{asymmetric} binary attributes the presence ($1$) matters more than the joint absence: a match of two $1$s is more significant than a match of two $0$s. The number $t$ of negative matches is considered unimportant and is ignored, which gives the \g{asymmetric binary dissimilarity}
+\[
+    d_J(i,j)=\frac{r+s}{q+r+s}.
+\]
+The corresponding similarity is the \g{Jaccard coefficient}
+\[
+    J(i,j)=\frac{q}{q+r+s}=1-d_J(i,j).
+\]
+
+\begin{example}
+Two patients share $3$ positive symptoms ($q=3$), differ on $2$ ($r+s=2$) and share $20$ absent symptoms ($t=20$). Then
+\[
+    \text{SMC}=\frac{q+t}{q+r+s+t}=\frac{23}{25}=0.92,\qquad J=\frac{q}{q+r+s}=\frac{3}{5}=0.60.
+\]
+The SMC is dominated by the joint absences, while the Jaccard coefficient focuses on the informative presences: for sparse asymmetric data ``both absent'' carries little evidence of similarity.
+\end{example}
+
+\begin{example}
+We can now see the caveat of one-hot encoding. Object $i$ has blue eyes and brown hair, object $j$ has green eyes and brown hair: at the level of the original attributes there is $1$ match out of $2$ attributes, so $sim(i,j)=0.5$. If we encode eye color with three binary attributes (black, green, blue) and hair color with four (auburn, black, blond, brown), we get
+\[
+    i=(0,0,1,0,0,0,1),\qquad j=(0,1,0,0,0,0,1),
+\]
+that is $q=1$, $r=1$, $s=1$ and $t=4$. The simple matching coefficient is $(q+t)/7=5/7\approx 0.71$, inflated by the four common zeros, while the Jaccard coefficient is $1/3\approx 0.33$.
+\end{example}
+
+\subsubsection{Proximity for numeric attributes}
+For objects described by numeric attributes we use a family of distances.
+
+\begin{definition}[Minkowski distance]
+Let $i=(x_{i1},x_{i2},\dots,x_{ip})$ and $j=(x_{j1},x_{j2},\dots,x_{jp})$ be two objects described by $p$ numeric attributes. The Minkowski distance between $i$ and $j$ is
+\[
+    d(i,j)=\left(\sum_{f=1}^{p}|x_{if}-x_{jf}|^h\right)^{1/h},
+\]
+where $h$ is a real number such that $h\geq 1$. It is also called the $L_h$ norm.
+\end{definition}
+
+The most used special cases are:
+\begin{itemize}
+    \item $h=1$, the \g{Manhattan} (or city block) distance, the sum of the absolute differences of the coordinates:
+    \[
+        d(i,j)=|x_{i1}-x_{j1}|+|x_{i2}-x_{j2}|+\dots+|x_{ip}-x_{jp}|.
+    \]
+    It is useful when movements or costs accumulate dimension by dimension. On binary vectors it becomes the \s{Hamming distance}, which counts the differing bits.
+    \item $h=2$, the \g{Euclidean} distance, the straight-line distance in the geometric space:
+    \[
+        d(i,j)=\sqrt{(x_{i1}-x_{j1})^2+(x_{i2}-x_{j2})^2+\dots+(x_{ip}-x_{jp})^2}.
+    \]
+    It is the most common choice, but it is highly sensitive to the scale of the attributes and it becomes less and less discriminative in high dimensions.
+    \item $h\to\infty$, the \g{supremum} (or Chebyshev, $L_\infty$) distance, the maximum absolute difference across the attributes:
+    \[
+        d(i,j)=\lim_{h\to\infty}\left(\sum_{f=1}^{p}|x_{if}-x_{jf}|^h\right)^{1/h}=\max_{f}|x_{if}-x_{jf}|.
+    \]
+    It is useful when the worst deviation on a single dimension dominates the notion of dissimilarity.
+\end{itemize}
+
+These distances satisfy the following properties:
+\begin{itemize}
+    \item \s{Non-negativity}: $d(i,j)\geq 0$.
+    \item \s{Identity}: $d(i,j)=0$ if and only if $i=j$; in particular the distance of an object from itself is $0$.
+    \item \s{Symmetry}: $d(i,j)=d(j,i)$.
+    \item \s{Triangle inequality}: $d(i,j)\leq d(i,k)+d(k,j)$, i.e. going directly from $i$ to $j$ is never longer than making a detour through another object $k$.
+\end{itemize}
+A measure that satisfies these properties is called a \g{metric}.
+
+\begin{example}
+Consider four points described by two attributes:
+\begin{center}
+\begin{tabular}{ccc}
+    \toprule
+    point & attribute 1 & attribute 2 \\
+    \midrule
+    $x_1$ & 1 & 2 \\
+    $x_2$ & 3 & 5 \\
+    $x_3$ & 2 & 0 \\
+    $x_4$ & 4 & 5 \\
+    \bottomrule
+\end{tabular}
+\end{center}
+For $x_1$ and $x_2$ the differences on the two attributes are $2$ and $3$, so the Manhattan distance is $2+3=5$, the Euclidean distance is $\sqrt{2^2+3^2}\approx 3.61$ and the supremum distance is $\max\{2,3\}=3$. Repeating the computation for all the pairs we obtain the three dissimilarity matrices (in this order: Manhattan, Euclidean, supremum):
+\[
+    \begin{bmatrix}
+        0 &   &   &   \\
+        5 & 0 &   &   \\
+        3 & 6 & 0 &   \\
+        6 & 1 & 7 & 0
+    \end{bmatrix}
+    \qquad
+    \begin{bmatrix}
+        0    &      &      &   \\
+        3.61 & 0    &      &   \\
+        2.24 & 5.10 & 0    &   \\
+        4.24 & 1    & 5.39 & 0
+    \end{bmatrix}
+    \qquad
+    \begin{bmatrix}
+        0 &   &   &   \\
+        3 & 0 &   &   \\
+        2 & 5 & 0 &   \\
+        3 & 1 & 5 & 0
+    \end{bmatrix}
+\]
+\end{example}
+
+Attributes measured on large scales can dominate a distance: if income ranges in $0$--$100\,000$ and age in $0$--$100$, the Euclidean distance will mostly measure income. For this reason we usually \g{standardize} the data before computing distances, replacing each value $x$ of an attribute with its \s{z-score}
+\[
+    z=\frac{x-\mu}{\sigma},
+\]
+where $\mu$ and $\sigma$ are the mean and the standard deviation of that attribute. The z-score is a unitless variable, so standardization puts the attributes on comparable scales. When the outliers are strong, robust alternatives use the median and the median absolute deviation in place of $\mu$ and $\sigma$.
+
+\begin{remark}
+The scaling parameters must be fitted on the training set only and then applied to the validation and test data.
+\end{remark}
+
+\subsubsection{Proximity for ordinal attributes}
+The values of an ordinal attribute have a meaningful ranking, but the gap between adjacent categories is not defined by the data. We treat ordinal attributes almost like numeric ones. Let $f$ be an ordinal attribute with $M_f$ ordered states:
+\begin{enumerate}
+    \item we replace the value $x_{if}$ of each object with its rank $r_{if}\in\{1,\dots,M_f\}$;
+    \item since different ordinal attributes can have a different number of states, we normalize the ranks to $[0,1]$, so that every attribute has the same weight, replacing $r_{if}$ with
+    \[
+        z_{if}=\frac{r_{if}-1}{M_f-1};
+    \]
+    \item we compute the dissimilarity with any of the distances for numeric attributes, using $z_{if}$ as the value of attribute $f$ for object $i$.
+\end{enumerate}
+After the normalization the ordinal attributes can also be combined with numeric attributes in the same distance.
+
+\begin{example}
+For the attribute size with states small $<$ medium $<$ large we have $M_f=3$; the ranks are $1,2,3$ and the normalized values are $0$, $0.5$ and $1$. Suppose now that four objects have, for an ordinal attribute with states fair $<$ good $<$ excellent, the values excellent, fair, good, excellent. Their ranks are $3,1,2,3$, the normalized values are $1,0,0.5,1$ and, with the Euclidean distance, the dissimilarity matrix is
+\[
+    \begin{bmatrix}
+        0   &     &     &   \\
+        1.0 & 0   &     &   \\
+        0.5 & 0.5 & 0   &   \\
+        0   & 1.0 & 0.5 & 0
+    \end{bmatrix}
+\]
+Objects $1$ and $4$ are identical, while object $2$ is at the opposite end of the range with respect to both.
+\end{example}
+
+\begin{remark}
+This transformation treats consecutive ranks as equally spaced. It is a modeling assumption and not an information contained in the original categories.
+\end{remark}
+
+\subsubsection{Dissimilarity for attributes of mixed types}
+Real data sets often contain numeric, nominal, binary and ordinal attributes together. Each attribute should be compared with a distance suitable for its type, and the single contributions are then combined in one dissimilarity matrix, bringing all of them onto the common scale $[0,1]$. If the data set contains $p$ attributes of mixed types, the dissimilarity between objects $i$ and $j$ is
+\[
+    d(i,j)=\frac{\sum_{f=1}^{p}\delta_{ij}^{(f)}d_{ij}^{(f)}}{\sum_{f=1}^{p}\delta_{ij}^{(f)}},
+\]
+where the indicator $\delta_{ij}^{(f)}$ is $0$ if $x_{if}$ or $x_{jf}$ is missing, or if $x_{if}=x_{jf}=0$ and $f$ is an asymmetric binary attribute, and it is $1$ otherwise. The contribution $d_{ij}^{(f)}$ of attribute $f$ depends on its type:
+\begin{itemize}
+    \item $f$ numeric: $d_{ij}^{(f)}=\dfrac{|x_{if}-x_{jf}|}{\max_f-\min_f}$, where $\max_f$ and $\min_f$ are the maximum and the minimum value of attribute $f$;
+    \item $f$ nominal or binary: $d_{ij}^{(f)}=0$ if $x_{if}=x_{jf}$, otherwise $d_{ij}^{(f)}=1$;
+    \item $f$ ordinal: we compute the ranks $r_{if}$ and $z_{if}=\dfrac{r_{if}-1}{M_f-1}$, and we treat $z_{if}$ as numeric.
+\end{itemize}
+More in general the final dissimilarity can be a weighted average of the attribute-level dissimilarities,
+\[
+    d(i,j)=\frac{\sum_{f}w_f\,d_{ij}^{(f)}}{\sum_{f}w_f},
+\]
+where the weights $w_f$ encode the importance, the reliability or the availability of each attribute; the formula above is the case in which the weights are the indicators $\delta_{ij}^{(f)}$. For example, the similarity between two patients may combine a distance on the age, the matching of the diagnosis, the Jaccard similarity of the symptoms and the rank of the severity of the disease.
+
+\begin{example}
+Consider four objects described by three attributes of different types:
+\begin{center}
+\begin{tabular}{cccc}
+    \toprule
+    object & test-1 (nominal) & test-2 (ordinal) & test-3 (numeric) \\
+    \midrule
+    1 & code A & excellent & 45 \\
+    2 & code B & fair      & 22 \\
+    3 & code C & good      & 64 \\
+    4 & code A & excellent & 28 \\
+    \bottomrule
+\end{tabular}
+\end{center}
+No value is missing and there are no asymmetric binary attributes, so $\delta_{ij}^{(f)}=1$ everywhere. Let us compute $d(3,1)$. For test-1 the two codes differ, so $d_{31}^{(1)}=1$. For test-2 the normalized ranks are $0.5$ and $1$, so $d_{31}^{(2)}=0.5$. For test-3 we have $\max_f-\min_f=64-22=42$, so $d_{31}^{(3)}=|64-45|/42\approx 0.45$. Then
+\[
+    d(3,1)=\frac{1+0.50+0.45}{3}=0.65.
+\]
+Repeating the computation for all the pairs we obtain
+\[
+    \begin{bmatrix}
+        0    &      &      &   \\
+        0.85 & 0    &      &   \\
+        0.65 & 0.83 & 0    &   \\
+        0.13 & 0.71 & 0.79 & 0
+    \end{bmatrix}
+\]
+Objects $1$ and $4$ are the most similar, as we could guess from their values of test-1 and test-2, while objects $1$ and $2$ are the least similar.
+\end{example}
+
+\subsubsection{Cosine similarity}
+A document can be represented by a \s{term-frequency vector}, with one attribute for each word that records how many times the word occurs in the document. These vectors are very long and \s{sparse}, i.e. they have many $0$ values, and the distances seen so far do not work well on them: two documents can have many $0$ values in common, but this does not make them similar. We need a measure that focuses on the words that the two documents do have in common and on their frequency, ignoring the zero-matches.
+
+\begin{definition}[Cosine similarity]
+Let $d_1$ and $d_2$ be two vectors (e.g. two term-frequency vectors). Their cosine similarity is
+\[
+    \cos(d_1,d_2)=\frac{d_1\cdot d_2}{\norm{d_1}\,\norm{d_2}},
+\]
+where $d_1\cdot d_2$ is the dot product of the two vectors and $\norm{d}$ is the Euclidean norm (the length) of the vector $d=(x_1,\dots,x_p)$, that is $\norm{d}=\sqrt{x_1^2+x_2^2+\dots+x_p^2}$.
+\end{definition}
+
+The measure is the cosine of the angle between the two vectors, so it focuses on their direction and not on their magnitude: a value close to $1$ means that the vectors point in the same direction, a value close to $0$ that they are orthogonal, i.e. unrelated. For this reason it is useful when the length of the documents varies, and it is also used for term-frequency or TF-IDF vectors, embeddings and recommendation vectors. The cosine similarity does not satisfy all the properties of a metric, so it is a \s{nonmetric} measure.
+
+\begin{example}
+Consider the term-frequency vectors of two documents over the words team, coach, hockey, baseball, soccer, penalty, score, win, loss, season:
+\[
+    d_1=(5,0,3,0,2,0,0,2,0,0),\qquad d_2=(3,0,2,0,1,1,0,1,0,1).
+\]
+We have
+\begin{align*}
+    d_1\cdot d_2 &= 5\cdot 3+3\cdot 2+2\cdot 1+2\cdot 1=25,\\
+    \norm{d_1} &= \sqrt{5^2+3^2+2^2+2^2}=\sqrt{42}\approx 6.481,\\
+    \norm{d_2} &= \sqrt{3^2+2^2+1^2+1^2+1^2+1^2}=\sqrt{17}\approx 4.123,
+\end{align*}
+and therefore
+\[
+    \cos(d_1,d_2)=\frac{25}{6.481\cdot 4.123}\approx 0.94.
+\]
+The two documents use many of the same terms in similar proportions, so they are quite similar. The Euclidean distance, instead, can be strongly affected by the length of the documents, while the cosine similarity compares only the orientation of the vectors.
+\end{example}
+
+\subsubsection{Choosing a proximity measure}
+The proximity measure must match the type of the data:
+\begin{center}
+\small
+\begin{tabular}{lll}
+    \toprule
+    Data type & Typical choice & Caution \\
+    \midrule
+    Numeric continuous & Euclidean, Manhattan, Mahalanobis & scale the variables first \\
+    Sparse text vectors & cosine, Jaccard & direction matters more than magnitude \\
+    Asymmetric binary & Jaccard & ignore the joint absences \\
+    Nominal categories & matching, one-hot + suitable metric & avoid fake orderings \\
+    Ordinal variables & rank-based distance & gaps between ranks are assumptions \\
+    Mixed attributes & weighted mixed-type distance & choose the weights carefully \\
+    \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Practical checklist}
+Before modeling we should be able to answer the following questions about our data:
+\begin{enumerate}
+    \item \s{What is an object?} What does one row, or one instance, represent?
+    \item \s{What is each attribute?} What are its measurement scale and its semantic meaning?
+    \item \s{What is the distribution?} Central tendency, spread, skewness, missing values and outliers.
+    \item \s{How is similarity defined?} Which distance or similarity measure matches the task?
+    \item \s{What can go wrong?} Leakage, biased samples, duplicated objects, wrong units, hidden groups.
+    \item \s{What should be visualized?} Raw data, transformed data and model errors.
+\end{enumerate}
+
+The most common pitfalls in data exploration are:
+\begin{itemize}
+    \item treating identifiers as numeric features;
+    \item using the Euclidean distance on unscaled variables with different units;
+    \item splitting the data randomly when groups, time or production lots should remain separated;
+    \item interpreting a high correlation as a causal explanation;
+    \item removing outliers without a domain analysis;
+    \item choosing visualizations that hide the structure of the distribution;
+    \item using a similarity measure that does not match the attribute types.
+\end{itemize}

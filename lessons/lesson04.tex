@@ -1,0 +1,62 @@
+\section{Lesson 04 --- 13/10/2026}
+\subsection{Classification}
+We start to analyze teh problem of \g{classification}. In classification problems we have a set of objects described by a set of attribute, the objective is to associate each object with a class based on yhe value of their attributes. (Ex. we can described patients by age, family 
+history, smoker and classified them in low risk and high risk). To start we need to have a domain knowledge$\implies$we need labelled objects (training set). When we have a new object and we need to predict the class we use the lazy learner, Rote learner: if we have an object identical to the examineted one $\implies$ assosiate the same clas; if is not identical$\implies$ NO class.
+
+This classifier work but can be improved for sure, because for many object we don't have a class. This classifier is not able to generalize. To improve this classifier we need to remove the identical constrain and look for similar object instead of perfect match. For similarity we consider distance, this approach is called \g{1-Nearest neighbour}:
+algoritm of 1 nearest neighbour
+
+the complexity is O(N*F) where N is the number of object anf F the number of feature, we need to check the distance with all the other object to look for the nearest. This approach work well but there is a problem. If there is noise we can have errors and miss classification if the nearest neighbour is a  wrong classefied object. We can solve this problem by increasing the number of neighbrour, \g{K-Nearest Neighbour}, and choosing the majority class among them. This approach work and is robust to noise but we need to choose k and we don't have an algorithm to choose it, we need then to test and evaluate the accuracy to choose the best value of k. Another problem we have is that k-nearest neighbours is computationally heavy when the number of objects is very large.
+
+Algorithm k-nearest neighbour
+
+By implementing the algorithm with an heap we can reduce the complexity to $O(NF+N\log{K})$.
+
+We can improve the efficiency of lazy learners, the prblem is the number of object, if it is too large complexity increase. We need then to reduce the number of object, without decreasing the accuracy of our classifier of course. We can look for zone where we have a lot of object with the same class and replace them with a representative one. Another method is to implement \g{editing methods}:  removal of training instances that do not provide useful information for the learning process.
+
+\subsubsection{Editing methods}
+
+\g{Wilson editing}: In wilson methods we remove sample that disagree with class vote of their neighbours.
+
+algorithm wilson editing
+
+this approach does not remove a lot of instances but is intresting because it increases the accuracy of the classifier by removing instaces considered noisy.
+
+\g{Multi-edit}: non ho capito. (vedi libro)
+
+\g{Citation editing}: To define the neighbours of an istance we use references and citers. For an instance x, the neighbours may include: 1. its nearest neighbours(refernce of x) and the istances for witch x is a neighbour(citers of x).
+Editing decision: non ho capito
+
+\g{supervised clustering}: non ho capito
+
+If we want to compare the editing methods we can see compression, accuracy, interpretation.
+
+Copy the table in the slide
+
+\subsection{Prediction problems}
+
+Can I apply the k-NN to predict a number instead a label? The answer is yes but we need to change a bit the algorithm. In the classification problem we choose the class with the majority vote, in numeric prediction we predict the value by averaging the value of the neighbours of the target value.
+
+K-NN regression algorithm.
+
+\subsection{Case-Based Reasoning (CBR)}
+Another lazy learners algorithm is the CBR. If the training set is not a set of object but a set of complex case(or problems) we may want to classifies them because we assume that similar problems have similar solutions. The problem we have is that we need to define a new similar concept because distance now is meaningless. A CBR is applied using four step:
+item list form the table in the slide.
+
+In a CBR cases are symbolic experiences and not just points in a Euclidean space, a CBR system need to store cases in form of text containing a rich description: attributes, fuction graphs, contextual information, solution and outcome.
+
+\g{Retrive}.
+We need to define a domain suitable similarity and using that we select one or several cases. The goal is to retrive a small set of high relevant cases.
+
+\g{Reuse}.
+We use the retrieved cases to propose a new solution to the new cases.
+
+\g{Revise}.
+We need to test our solution and evaluate if we need to retain the solution or not using feedback(rating or correction).
+
+\g{Retain}.
+We store the new solution to make the system learn from new experience.
+
+\begin{remark}
+    CBR is useful when past experiences are a reliable source of knowledge. The quality of a CBR system depends heavily on the case representation, the similarity function and the retention policy 
+\end{remark}

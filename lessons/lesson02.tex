@@ -203,7 +203,7 @@ Some details on each of them:
 
 \subsection{Redundancy}
 
-Redundant data can slow data mining. we can have redundancy not only with attribute with the same value but also if twu attributes have the same trend and are \textbf{strongly correlated}.
+Redundant data can slow data mining. we can have redundancy not only with attribute with the same value but also if two attributes have the same trend and are \textbf{strongly correlated}.
 Redundancy does not only slow the mining, it also creates inconsistencies. It can come from:
 \begin{itemize}
     \item \textbf{Different names:} the same attribute or object appears with different names in the sources; object identification removes this duplicated meaning.
@@ -229,7 +229,7 @@ So in every row (column) the sum of the expected frequencies is equal to the sum
 
 The chi-square is a type of probability distribution that is used in hypothesis testing to determine independence. \textbf{The null hypothesis} state that no association exists between the two variables, while \textbf{the alternative hypothesis} states that an association exists.
 
-More precisely, under the null hypothesis $H_0$ (the two variables are statistically independent in the population) the statistic $X^2$ follows a $\chi^2$ distribution. The \textbf{p-value} is the probability, under $H_0$, of obtaining a value at least as large as the observed one, i.e. the area under the curve of the distribution to the right of the computed $X^2$.
+More precisely, under the null hypothesis $H_0$ (the two variables are statistically independent in the population) the statistic $X^2$ follows a $\chi^2$ distribution (vedi stea). The \textbf{p-value} is the probability, under $H_0$, of obtaining a value at least as large as the observed one, i.e. the area under the curve of the distribution to the right of the computed $X^2$.
 
 There is not a single $\chi^2$ distribution, the one we have to use depends on the \textbf{degrees of freedom}: the number of cells of the contingency table that can vary freely, given the row and column totals. For a table with $r$ rows and $c$ columns
 \[

@@ -1,6 +1,6 @@
 \section{Lesson 04 --- 13/10/2026}
 \subsection{Classification}
-We start to analyze teh problem of \g{classification}. In classification problems we have a set of objects described by a set of attribute, the objective is to associate each object with a class based on yhe value of their attributes. (Ex. we can described patients by age, family 
+We start to analyze the problem of \g{classification}. In classification problems we have a set of objects described by a set of attribute, the objective is to associate each object with a class based on yhe value of their attributes. (Ex. we can described patients by age, family 
 history, smoker and classified them in low risk and high risk). To start we need to have a domain knowledge$\implies$we need labelled objects (training set). When we have a new object and we need to predict the class we use the lazy learner, Rote learner: if we have an object identical to the examineted one $\implies$ assosiate the same clas; if is not identical$\implies$ NO class.
 
 This classifier work but can be improved for sure, because for many object we don't have a class. This classifier is not able to generalize. To improve this classifier we need to remove the identical constrain and look for similar object instead of perfect match. For similarity we consider distance, this approach is called \g{1-Nearest neighbour}:

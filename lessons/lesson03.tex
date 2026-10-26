@@ -527,6 +527,6 @@ otherwise we stop. $\Delta(A,T_A;S)$ is a correction term that penalizes the dis
 \]
 where $c$, $c_1$, $c_2$ are the numbers of classes represented in $S$, $S_1$, $S_2$.
 % Delta: the slide (3.Preprocessing.pdf, slide 98) prints it truncated ("log2(3c) - c1 E(S1) - c2 E(S2))").
-% The formula above is the one of the original paper (Fayyad and Irani, 1993), written from memory: to check.
+% The formula above is verified on the original paper (Fayyad and Irani, 1993, IJCAI-93, pp. 1022--1027, Sec. 3.3), where the number of classes is called k instead of c.
 
 \texttt{Concept hierarchy generation.} A concept hierarchy organizes the values of an attribute hierarchically, and we reduce the data by replacing the low-level values with higher-level concepts: for example the numeric ages become \s{youth}, \s{adult}, \s{senior}. In a data warehouse this allows us to view the data at multiple granularities (drill-down and roll-up). The hierarchy can be specified by the experts or formed automatically, both for numeric data (applying the discretization methods recursively) and for nominal data, for example street $<$ city $<$ state $<$ country, or \{Urbana, Champaign, Chicago\} $<$ Illinois. For nominal attributes the automatic generation can use the number of distinct values of each attribute.

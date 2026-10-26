@@ -1,7 +1,7 @@
 \section{Lesson 03 --- 06/10/2026}
 
 \subsection{Correlation Analysis with numeric data}
-The correletion coefficient, also called Pearson's product-moment coefficient.
+The \g{correlation coefficient}, also called \g{Pearson's product-moment coefficient}, is defined as
 \[
     r_{A,B} = \frac{\sum_{i=1}^{n}(a_i-\bar{A})(b_i-\bar{B})}{n\sigma_A\sigma_B}
 \]
@@ -9,11 +9,13 @@ The correletion coefficient, also called Pearson's product-moment coefficient.
 where $n$ is the number of tuples, $\bar{A}$ and $\bar{B}$ are the mean values of the attributes A and B. $\sigma_A$ and $\sigma_B$ are 
 the standard deviations of the attributes A and B. 
 
-If $r_{A,B}$ is $>0$, then A and B are positively linearly correlated.
-If $r_{A,B}$ is $<0$, then A and B are negatively linearly correlated.
-If $r_{A,B}$ is $=0$, then A and B are independent.
+\begin{itemize}
+    \item If $r_{A,B}>0$, then A and B are positively linearly correlated.
+    \item If $r_{A,B}<0$, then A and B are negatively linearly correlated.
+    \item If $r_{A,B}=0$, then there is no linear correlation between A and B (this does not mean that they are independent, see the remark below).
+\end{itemize}
 
-For visualization of the correlation between two attributes we can use a scatter plot and se the trend of the points.
+For visualization of the correlation between two attributes we can use a scatter plot and see the trend of the points.
 
 The same coefficient can be computed without centering the data first, using the sum of the cross-products $a_ib_i$ (for each tuple we multiply the value of A by the value of B):
 \[
@@ -67,25 +69,27 @@ The covariance is positive, so the two prices tend to rise together.
 
 \subsection{Data reduction}
 
-To reduce the data size we can work in diffrent dimensions:
+To reduce the data size we can work in different ways:
+\begin{itemize}
+    \item \g{Dimensionality reduction}: reduce the number of attributes, for example by removing redundant or irrelevant attributes.
+    \item \g{Numerosity reduction}: reduce the number of tuples, for example by sampling or aggregation, or by replacing the objects with models.
+    \item \g{Data compression}: reduce the data size by encoding the data more efficiently.
+\end{itemize}
 
-Dimensionality reduction: reduce the number of attributes, for example by removing redundant or irrelevant attributes.
-Numerosity reduction: reduce the number of tuples, for example by sampling or aggregation. we replace some object with models.
-Data compression: reduce the data size by encoding the data more efficiently.
-
-
-Why we should reduce the number of dimensions?
-
-We need to avoide the curse of dimensionality, which is a phenomenon that occurs when the number of dimensions increases, in which data became increasingly sparse and density become less meaningful.
-Also, distance between points become less meaningful, because all the points appear far too each other if the space is too sparse. This is not good because almost all the algorithms in machine learning are based on distance or density.
-There is also a third problem: the possible combinations of subspaces grow exponentially with the number of dimensions, so visualization becomes difficult and time and space requirements increase.
+Why should we reduce the number of dimensions? We need to avoid the \g{curse of dimensionality}, a phenomenon that occurs when the number of dimensions increases and that has three effects:
+\begin{itemize}
+    \item \g{Sparsity}: the data become increasingly sparse and the density becomes less meaningful.
+    \item \g{Distances}: the distance between points becomes less meaningful, because all the points appear far from each other when the space is too sparse. This is a problem because almost all the algorithms in machine learning are based on distance or density.
+    \item \g{Combinations}: the possible combinations of subspaces grow exponentially with the number of dimensions, so visualization becomes difficult and the time and space requirements increase.
+\end{itemize}
 
 Besides avoiding the curse of dimensionality, reducing the number of dimensions helps us to eliminate irrelevant features, reduce noise, reduce the time and space required by the mining algorithms and make visualization easier.
 
 To reduce dimensionality we see two different approaches:
-
-. Linear projection methods: (Es. PCA - Principal Component Analysis) we transform the data and then work with it.
-. Heuristic methods: we use greedy methods directly on the data source.
+\begin{itemize}
+    \item \g{Linear projection methods} (e.g. PCA, Principal Component Analysis): we transform the data and then work with the transformed data.
+    \item \g{Heuristic methods}: we use greedy methods directly on the data source.
+\end{itemize}
 
 \subsection{Principal Component Analysis (PCA)}
 
@@ -161,10 +165,11 @@ This is the main difference with subset selection, that we see next: subset sele
 A second way to reduce dimensionality is to select a subset from the original features. We need to select only the features relevant to our task, trying to avoid redundancy and irrelevance. We can't try every possible subset of features to find the best one, we need to use a greedy approach.
 
 We will see two different approaches to select a subset of features:
-. Forward selection: we start with an empty set of features and we add one feature at a time, selecting the more relevant and less redundant feature at each step.
-. Backward elimination: we start with the full set of features and we remove one feature at a time, removing the less relevant and more redundant feature at each step.
-
-for both approaches we need a metric to define relevancy and redundancy.
+\begin{itemize}
+    \item \g{Forward selection}: we start with an empty set of features and we add one feature at a time, selecting the most relevant and least redundant feature at each step.
+    \item \g{Backward elimination}: we start with the full set of features and we remove one feature at a time, removing the least relevant and most redundant feature at each step.
+\end{itemize}
+For both approaches we need a metric to define relevancy and redundancy.
 
 In detail, the attributes we want to remove are of two kinds:
 \begin{itemize}
@@ -238,9 +243,11 @@ The algorithm is:
 
 \subsection{Attribute creation / feature generation}
 Sometimes the features we need are not in the original data, so we need to create new ones. We can create features in three different ways:
-. Extraction: trasformation specific to the domain, for example we can extract features from images or text. mapping data to a new space.
-. Construction: we can combine existing features to create new ones, for example we can create a new feature that is the sum of two existing features.
-. Discretization: we can convert continuous features into discrete ones.
+\begin{itemize}
+    \item \g{Extraction}: transformation specific to the domain, for example we can extract features from images or text, or map the data to a new space.
+    \item \g{Construction}: we can combine existing features to create new ones, for example a new feature that is the sum of two existing features.
+    \item \g{Discretization}: we can convert continuous features into discrete ones.
+\end{itemize}
 
 Typical examples of mapping the data to a new space are the Fourier transformation and the wavelet transformation. For construction, a classic example is adding the attribute \s{area} computed from the attributes \s{height} and \s{width}: the new attribute makes explicit a relation between the original ones that the mining algorithm may not find alone, and it is still interpretable. Discretization, that we see at the end of this lesson, also reduces the data size and prepares the data for the methods that work with categories.
 
@@ -249,12 +256,12 @@ The discrete wavelet transform (DWT) can also be used to reduce the data. It tra
 \end{remark}
 
 \subsection{Numerosity reduction}
-We can reduce the number of stored values by choosing optimal representation. We need to be carful because we can lose information, smoller data often means higher speed and lower cost, but also lower accuracy. We need to preserve the data structure and relevant infrmation. We can use two families of methods, keeping in mind a trade-off:
+We can reduce the number of stored values by choosing optimal representation. We need to be careful because we can lose information: smaller data often means higher speed and lower cost, but also lower accuracy. We need to preserve the data structure and the relevant information. We can use two families of methods:
 \begin{itemize}
     \item Parametric methods: We assume that the data fit a models and we compute, and only store, the parameters of the model. For example, we can use linear regression to fit a line to the data and use the parameters of the line to represent the data.
     \item Non-parametric methods: we do not assume any specific distribution for the data, but we use techniques that are based on the data itself to find families or aggregations. For example, we can use histograms or kernel density estimation to model the data.
-    \item Trade-off (compression vs. detail): smaller representations can be faster, but they may hide local structure. The right method depends on the query and on the mining task.
 \end{itemize}
+There is a trade-off between compression and detail: smaller representations can be faster, but they may hide local structure. The right method depends on the query and on the mining task.
 
 \subsubsection{Parametric methods}
 With regression we replace many observations with a fitted function: we estimate the parameters of the model, we store only them and we discard the raw data (except possible outliers).
@@ -296,7 +303,7 @@ The regression equation is $y = 0.6438x + 26.78$: instead of the five pairs we s
 \[
     y = w_0 + w_1x_1 + w_2x_2
 \]
-The coefficients are still found with least squares. In matrix form, if $X$ is the matrix of the observations and $Y$ the vector of the responses:
+The coefficients are still found with least squares. In matrix form, if $X$ is the matrix of the observations (with a first column of 1s for the intercept $w_0$) and $Y$ the vector of the responses:
 \[
     W = (X^TX)^{-1}X^TY
 \]
@@ -356,15 +363,14 @@ Dimensionality reduction and numerosity reduction can also be considered forms o
 
 \subsection{Transformation}
 
-Lats step in data pre-processing is transformation, which is the process of changing the format, structure or values of the data. We have three different families of transformations:
+The last step in data pre-processing is transformation, which is the process of changing the format, structure or values of the data. We have three different families of transformations:
 \begin{itemize}
-    \item Smoothing: removing noises
-    \item Aggregation \& construction: create new attributes from existing one.
-    \item Normalization \& Discretization: scale values to a smaller range
+    \item \g{Smoothing}: removing noise.
+    \item \g{Aggregation \& construction}: create new attributes from existing ones.
+    \item \g{Normalization \& discretization}: scale values to a smaller range.
 \end{itemize}
 
-Data normalization.
-This technique are applied to ensure a more efficient and accurate data analysis. Normalization bring all the values in a specific range to ensure that an attribute isn't more important just because of the higher scale.
+\g{Data normalization}. These techniques are applied to ensure a more efficient and accurate data analysis. Normalization brings all the values into a specific range, to ensure that an attribute isn't more important just because of its higher scale.
 
 We can see the problem in the computation of the Euclidean distance between two points $p$ and $q$ with $n$ attributes:
 \[
@@ -389,7 +395,7 @@ The income ranges from \$12,000 to \$98,000 and we normalize it to $[0.0, 1.0]$.
 \[
     v' = \frac{v - \mu_A}{\sigma_A}
 \]
-This normalization work well with outlier, they will be a problem in min-max.
+This normalization works well with outliers, which are instead a problem for min-max.
 It is also the one to use when the actual minimum and maximum of the attribute are unknown.
 
 \begin{example}[z-score normalization]
@@ -407,9 +413,9 @@ that is more robust to outliers than $\sigma_A$, because the deviations from the
 
 \texttt{Decimal scaling}: we move the comma in the number depending on the max absolute values of the attribute.
 \[
-    v' = \frac{v}{10^{j}}, \qquad j = \text{smallest integer} \max(|v'|) < 1
+    v' = \frac{v}{10^{j}}
 \]
-that is, $j$ is the smallest integer such that $\max(|v'|)<1$.
+where $j$ is the smallest integer such that $\max(|v'|)<1$.
 
 \begin{example}[Decimal scaling]
 The values of A range from $-986$ to $917$, so the maximum absolute value is 986. We divide each value by 1000 ($j=3$): $-986$ becomes $-0.986$ and $917$ becomes $0.917$.
@@ -515,8 +521,12 @@ and, by the MDL (minimum description length) principle, the cut is accepted only
 \[
     G(A,T_A;S) > \frac{\log_2(|S|-1)+\Delta(A,T_A;S)}{|S|}
 \]
-otherwise we stop. $\Delta(A,T_A;S)$ is a correction term that depends on the numbers $c$, $c_1$, $c_2$ of classes represented in $S$, $S_1$, $S_2$ and on the entropies $E(S)$, $E(S_1)$, $E(S_2)$; this rule penalizes the discretizations that are too complex.
-% Delta: the slide (3.Preprocessing.pdf, slide 98) prints "log2(3c) - c1 E(S1) - c2 E(S2))", which looks truncated.
-% To check with the professor / the original paper before writing the formula here.
+otherwise we stop. $\Delta(A,T_A;S)$ is a correction term that penalizes the discretizations that are too complex:
+\[
+    \Delta(A,T_A;S) = \log_2(3^c-2) - \big[c\,E(S) - c_1E(S_1) - c_2E(S_2)\big]
+\]
+where $c$, $c_1$, $c_2$ are the numbers of classes represented in $S$, $S_1$, $S_2$.
+% Delta: the slide (3.Preprocessing.pdf, slide 98) prints it truncated ("log2(3c) - c1 E(S1) - c2 E(S2))").
+% The formula above is the one of the original paper (Fayyad and Irani, 1993), written from memory: to check.
 
 \texttt{Concept hierarchy generation.} A concept hierarchy organizes the values of an attribute hierarchically, and we reduce the data by replacing the low-level values with higher-level concepts: for example the numeric ages become \s{youth}, \s{adult}, \s{senior}. In a data warehouse this allows us to view the data at multiple granularities (drill-down and roll-up). The hierarchy can be specified by the experts or formed automatically, both for numeric data (applying the discretization methods recursively) and for nominal data, for example street $<$ city $<$ state $<$ country, or \{Urbana, Champaign, Chicago\} $<$ Illinois. For nominal attributes the automatic generation can use the number of distinct values of each attribute.

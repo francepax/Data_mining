@@ -1,62 +1,134 @@
 \section{Lesson 04 --- 13/10/2026}
 \subsection{Classification}
-We start to analyze the problem of \g{classification}. In classification problems we have a set of objects described by a set of attribute, the objective is to associate each object with a class based on yhe value of their attributes. (Ex. we can described patients by age, family 
-history, smoker and classified them in low risk and high risk). To start we need to have a domain knowledge$\implies$we need labelled objects (training set). When we have a new object and we need to predict the class we use the lazy learner, Rote learner: if we have an object identical to the examineted one $\implies$ assosiate the same clas; if is not identical$\implies$ NO class.
+We start to analyze the problem of \g{classification}. In classification problems we have a set of objects described by a set of attributes, the objective is to associate each object with a class based on the value of their attributes. (Ex. we can describe patients by age, family
+history, smoker and classify them in low risk and high risk). The first family of classifiers we will see are called \g{lazy learners}, a lazy learner does not build a model during the training phase. The classification is divided in two phases: \g{training}, we give the model labelled objects and it simply stores them, \g{prediction}, the model performs generalization on unlabelled objects (\g{test set}). The simplest lazy learner we can think of is the \g{Rote learner}: if we have an object identical to the tested one $\implies$ associate the same class; if it is not identical $\implies$ NO class.
 
-This classifier work but can be improved for sure, because for many object we don't have a class. This classifier is not able to generalize. To improve this classifier we need to remove the identical constrain and look for similar object instead of perfect match. For similarity we consider distance, this approach is called \g{1-Nearest neighbour}:
-algoritm of 1 nearest neighbour
+This classifier works but can be improved for sure, because for many objects we don't have a class. This classifier is not able to generalize. To improve this classifier we need to remove the identical constraint and look for similar objects instead of a perfect match. For similarity we consider distance, this approach is called \g{1-Nearest neighbour}:
 
-the complexity is O(N*F) where N is the number of object anf F the number of feature, we need to check the distance with all the other object to look for the nearest. This approach work well but there is a problem. If there is noise we can have errors and miss classification if the nearest neighbour is a  wrong classefied object. We can solve this problem by increasing the number of neighbrour, \g{K-Nearest Neighbour}, and choosing the majority class among them. This approach work and is robust to noise but we need to choose k and we don't have an algorithm to choose it, we need then to test and evaluate the accuracy to choose the best value of k. Another problem we have is that k-nearest neighbours is computationally heavy when the number of objects is very large.
+\begin{algorithm}[ht]
+\caption{1-Nearest Neighbour}
+\KwIn{training set $D=\{(x_1,y_1),\dots,(x_n,y_n)\}$, new sample $x$}
+$best\_distance \leftarrow +\infty$; $predicted\_class \leftarrow$ null\;
+\ForEach{$(x_i,y_i)\in D$}{
+    $distance \leftarrow dist(x,x_i)$\;
+    \If{$distance < best\_distance$}{
+        $best\_distance \leftarrow distance$; $predicted\_class \leftarrow y_i$\;
+    }
+}
+\Return{$predicted\_class$}\;
+\end{algorithm}
 
-Algorithm k-nearest neighbour
+The complexity is $O(N\cdot F)$ where $N$ is the number of objects and $F$ the number of features, we need to check the distance with all the other objects to look for the nearest. This approach works well but there is a problem. If there is noise we can have errors and misclassification if the nearest neighbour is a wrongly classified object. We can solve this problem by increasing the number of neighbours, \g{K-Nearest Neighbour}, and choosing the majority class among them. This approach works and is robust to noise but we need to choose $k$ and we don't have an algorithm to choose it, we need then to test and evaluate the accuracy to choose the best value of $k$. Another problem we have is that k-nearest neighbours is computationally heavy when the number of objects is very large.
 
-By implementing the algorithm with an heap we can reduce the complexity to $O(NF+N\log{K})$.
+By implementing the algorithm with a max-heap we can reduce the complexity to $O(NF+N\log{K})$. The heap keeps the $k$ closest points seen so far, its root is always the farthest among the current $k$ neighbours.
 
-We can improve the efficiency of lazy learners, the prblem is the number of object, if it is too large complexity increase. We need then to reduce the number of object, without decreasing the accuracy of our classifier of course. We can look for zone where we have a lot of object with the same class and replace them with a representative one. Another method is to implement \g{editing methods}:  removal of training instances that do not provide useful information for the learning process.
+\begin{algorithm}[ht]
+\caption{Efficient k-Nearest Neighbour}
+\KwIn{training set $D=\{(x_1,y_1),\dots,(x_n,y_n)\}$, query sample $x$, number of neighbours $k$}
+$H \leftarrow$ empty max-heap (at most $k$ elements, keyed by distance)\;
+\ForEach{$(x_i,y_i)\in D$}{
+    $d \leftarrow dist(x,x_i)$\;
+    \uIf{$size(H)<k$}{
+        insert $(d,y_i)$ into $H$\;
+    }
+    \ElseIf{$d<maximum\_distance(H)$}{
+        remove the element with maximum distance from $H$\;
+        insert $(d,y_i)$ into $H$\;
+    }
+}
+$predicted\_class \leftarrow$ majority vote of the labels in $H$\;
+\Return{$predicted\_class$}\;
+\end{algorithm}
+
+We can improve the efficiency of lazy learners, the problem is the number of objects, if it is too large complexity increases. We need then to reduce the number of objects, without decreasing the accuracy of our classifier of course. We can look for zones where we have a lot of objects with the same class and replace them with a representative one. Another method is to implement \g{editing methods}: removal of training instances that do not provide useful information for the learning process.
 
 \subsubsection{Editing methods}
 
-\g{Wilson editing}: In wilson methods we remove sample that disagree with class vote of their neighbours.
+\g{Wilson editing}: In Wilson's method we remove samples that disagree with the class vote of their neighbours.
 
-algorithm wilson editing
+\begin{algorithm}[ht]
+\caption{Wilson editing}
+\KwIn{training set $O$, number of neighbours $K$}
+\textbf{Preprocessing}\;
+\ForEach{$(o_i,y_i)\in O$}{
+    find the $K$ nearest neighbours of $o_i$ in $O$, excluding $o_i$\;
+    predict $\hat{y}_i$ as their most frequent class label (ties are broken randomly)\;
+    mark $o_i$ for removal if $\hat{y}_i\neq y_i$\;
+}
+remove all marked points to obtain $O_r$\;
+\textbf{Classification}: classify each new example $q$ using K-NN on the edited set $O_r$\;
+\end{algorithm}
 
-this approach does not remove a lot of instances but is intresting because it increases the accuracy of the classifier by removing instaces considered noisy.
+All the neighbourhoods use the original $O$, points are deleted only after the full pass. This approach does not remove a lot of instances but is interesting because it increases the accuracy of the classifier by removing instances considered noisy. Note that local disagreement does not necessarily mean that an example is mislabeled.
 
-\g{Multi-edit}: non ho capito. (vedi libro)
+\g{Multi-edit}: a more robust iterative version of Wilson editing, the editing decision is less dependent on one single neighbourhood configuration. The steps are:
+\begin{enumerate}
+    \item \s{Randomly split}: partition the current training set into $M$ subsets.
+    \item \s{Classify}: for each subset $S_i$, use $S_{(i+1)\bmod M}$ as reference data for applying Wilson editing.
+    \item \s{Remove}: delete the instances that are misclassified.
+    \item \s{Merge}: join all the surviving instances into a new training set.
+    \item \s{Repeat}: stop when no more instances are removed.
+\end{enumerate}
+Wilson editing evaluates each point using its neighbourhood in the whole reference set, multi-edit evaluates points through repeated random subset comparisons. A single edit may be sensitive to the chosen neighbourhood, the repetition exposes unstable points to different local contexts and removes the consistently suspicious ones.
 
-\g{Citation editing}: To define the neighbours of an istance we use references and citers. For an instance x, the neighbours may include: 1. its nearest neighbours(refernce of x) and the istances for witch x is a neighbour(citers of x).
-Editing decision: non ho capito
+\g{Citation editing}: To define the neighbours of an instance we use references and citers (as in a citation graph: if a paper cites another one the two are related, and also if it is cited by another one). For an instance $x$, the neighbours may include: 1. its nearest neighbours (references of $x$) and 2. the instances for which $x$ is a neighbour (citers of $x$).
+Editing decision: the rule is evaluated on this richer relation, not only on a one-way k-NN list. We keep $x$ only if its citation neighbourhood supports its label.
 
-\g{supervised clustering}: non ho capito
+\g{Supervised clustering}: we replace the original training set $D$ with a smaller set $D_r$ of representative objects selected using class information. The steps are: run a supervised (class-aware) clustering on $D$, choose the representatives of the clusters, use the reduced set $D_r$ as new training set. The edited training set stores a compact set of class-consistent prototypes. This can reduce storage and prediction time, while preserving the class structure needed by nearest-neighbour classifiers.
 
-If we want to compare the editing methods we can see compression, accuracy, interpretation.
+If we want to compare the editing methods we can see compression, accuracy, interpretation. The \s{compression rate} is the ratio between the size of the edited training set and the size of the original one. There is a trade-off: stronger compression can reduce noise, but excessive compression may remove useful boundary cases. The comparison below comes from the experimental study of Zeidat, Wang and Eick, ``Dataset Editing Techniques: A Comparative Study''.
 
-Copy the table in the slide
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+Method & Compression & Accuracy & Interpretation \\
+\midrule
+Wilson editing & moderate & often improves & removes local noise / overlap \\
+Multi-edit & variable & more stable & repeated editing across subsets \\
+Citation editing & method-dependent & context-aware & uses reverse-neighbour relations \\
+Supervised clustering & high & depends on representatives & compresses data into prototypes \\
+\bottomrule
+\end{tabular}
+\end{center}
 
 \subsection{Prediction problems}
 
-Can I apply the k-NN to predict a number instead a label? The answer is yes but we need to change a bit the algorithm. In the classification problem we choose the class with the majority vote, in numeric prediction we predict the value by averaging the value of the neighbours of the target value.
+Can I apply the k-NN to predict a number instead of a label? The answer is yes but we need to change a bit the algorithm. In the classification problem we choose the class with the majority vote, in numeric prediction we predict the value by averaging the values of the neighbours of the target point.
 
-K-NN regression algorithm.
+The k-NN regression algorithm works as follows:
+\begin{enumerate}
+    \item \s{Store} the training data, with the examples together with their numeric target values $y$.
+    \item \s{Measure distances}: for a new sample $x_q$, compute the distance to each training example.
+    \item \s{Select} the $k$ nearest examples, they define the local neighbourhood.
+    \item \s{Average} the target values of the neighbours.
+\end{enumerate}
+The prediction is
+\[
+    \bar{y}(x_q)=\frac{1}{k}\sum_{i=1}^{k} y_i ,
+\]
+or, in the weighted option,
+\[
+    \bar{y}(x_q)=\frac{\sum_{i=1}^{k} w_i\, y_i}{\sum_{i=1}^{k} w_i}.
+\]
+For example, with $k=3$ and neighbours with targets $72$, $75$, $81$ the prediction is $(72+75+81)/3=76$.
 
 \subsection{Case-Based Reasoning (CBR)}
-Another lazy learners algorithm is the CBR. If the training set is not a set of object but a set of complex case(or problems) we may want to classifies them because we assume that similar problems have similar solutions. The problem we have is that we need to define a new similar concept because distance now is meaningless. A CBR is applied using four step:
-item list form the table in the slide.
+Another lazy learners algorithm is the CBR. If the training set is not a set of objects but a set of complex cases (or problems) we may want to classify them because we assume that similar problems have similar solutions. The problem we have is that we need to define a new similarity concept because distance now is meaningless. A CBR is applied using four steps: retrieve, reuse, revise and retain.
 
-In a CBR cases are symbolic experiences and not just points in a Euclidean space, a CBR system need to store cases in form of text containing a rich description: attributes, fuction graphs, contextual information, solution and outcome.
+In a CBR cases are symbolic experiences and not just points in a Euclidean space, a CBR system needs to store cases in form of text containing a rich description: attributes, function graphs, contextual information, solution and outcome.
 
-\g{Retrive}.
-We need to define a domain suitable similarity and using that we select one or several cases. The goal is to retrive a small set of high relevant cases.
+\g{Retrieve}.
+We need to define a domain suitable similarity and using that we select one or several cases. The goal is to retrieve a small set of highly relevant cases.
 
 \g{Reuse}.
 We use the retrieved cases to propose a new solution to the new cases.
 
 \g{Revise}.
-We need to test our solution and evaluate if we need to retain the solution or not using feedback(rating or correction).
+We need to test our solution and evaluate if we need to retain the solution or not using feedback (rating or correction).
 
 \g{Retain}.
 We store the new solution to make the system learn from new experience.
 
 \begin{remark}
-    CBR is useful when past experiences are a reliable source of knowledge. The quality of a CBR system depends heavily on the case representation, the similarity function and the retention policy 
+    CBR is useful when past experiences are a reliable source of knowledge. The quality of a CBR system depends heavily on the case representation, the similarity function and the retention policy
 \end{remark}

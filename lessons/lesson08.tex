@@ -23,13 +23,13 @@ so we obtain a family of parallel \g{iso-cost lines}. On the ROC plane the cost 
   xtick={0,1}, ytick={0,1},
   axis lines=left, clip=true]
   \addplot[dashed, gray] coordinates {(0,0) (1,1)};
-  \addplot[thick, blue!60!black, smooth] coordinates {(0,0) (0.05,0.4) (0.12,0.6) (0.3,0.78) (0.6,0.9) (1,1)};
-  \addplot[red!70!black, dashed] coordinates {(0,0.45) (0.5,0.95)};
-  \addplot[red!70!black, dashed] coordinates {(0.2,0) (1,0.8)};
-  \addplot[red!70!black, thick] coordinates {(0,0.33) (0.67,1)};
-  \addplot[only marks, mark=*, red!70!black] coordinates {(0.12,0.6)};
-  \node[right] at (axis cs:0.14,0.55) {optimal point};
-  \node[red!70!black, above] at (axis cs:0.82,0.62) {iso-cost lines};
+  \addplot[thick, blue!60!black] coordinates {(0,0) (0.15,0.6) (1,1)};
+  \addplot[red!70!black, dashed] coordinates {(0,0.15) (0.567,1)};
+  \addplot[red!70!black, dashed] coordinates {(0.133,0) (0.8,1)};
+  \addplot[red!70!black, thick] coordinates {(0,0.375) (0.417,1)};
+  \addplot[only marks, mark=*, red!70!black] coordinates {(0.15,0.6)};
+  \node[right] at (axis cs:0.16,0.48) {optimal point};
+  \node[red!70!black, above] at (axis cs:0.78,0.5) {iso-cost lines};
 \end{axis}
 \end{tikzpicture}
 \end{center}

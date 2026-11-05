@@ -1,0 +1,88 @@
+\section{Lesson 09 --- 05/11/2026}
+
+\subsection{Wilcoxon signed-rank test}
+
+\g{Wilcoxon signed-rank test} is one of the most common \g{nonparametric tests}. The core idea is to compare paired measurements by ranking the absolute differences between the pairs and then restoring their signs. The test is used when the assumptions of the paired t-test are not met, particularly when the data is not normally distributed. Some cases of use are:
+\begin{itemize}
+    \item the same units are measured twice, or observations are naturally matched;
+    \item the differences are ordinal or continuous and a normal model is not appropriate.
+\end{itemize}
+
+The null hypothesis is that the median of the differences between the pairs is zero ($H_0: \operatorname{median}(d_i) = 0$). Under $H_0$, positive and negative signs should be distributed approximately at random across the ranks.
+
+\begin{algorithm}[H]
+\caption{Wilcoxon signed-rank test (statistic)}
+\KwIn{paired observations $(x_i, y_i)$, $i = 1,\dots,n$}
+\KwOut{rank sums $W^+$ and $W^-$}
+\textbf{Differences}: compute $d_i = x_i - y_i$ for each pair and remove the pairs with $d_i = 0$\;
+\textbf{Ranks}: rank $|d_i|$ from the smallest to the largest, assigning the average rank to ties\;
+\textbf{Signs}: restore the sign of each original difference to its rank\;
+\textbf{Rank sums}: compute $W^+$ as the sum of the positive ranks and $W^-$ as the sum of the negative ranks\;
+\end{algorithm}
+
+Here $n$ is the number of non-zero paired differences, and
+\[
+  W^+ + W^- = \frac{n(n+1)}{2}.
+\]
+
+\subsubsection{Statistic and p-value}
+
+Under $H_0$ the observed statistic is
+\[
+  W = \min(W^+, W^-).
+\]
+\g{Exact inference} is used for small samples: use the exact distribution of $W$ or a critical-value table, find the probability of observing $W$ or a more extreme value, and choose a one-sided or two-sided alternative before looking at the result. The $p$-value is compared with the significance level $\alpha$; if a table gives only one-sided probabilities, a two-sided value is obtained with the convention stated by the table.
+
+For larger samples the \g{normal approximation} is used. With the rule adopted in the course, it applies when $n(n+1)/2 > 20$. Under $H_0$,
+\[
+  \mu_W = \frac{n(n+1)}{4}, \qquad
+  \sigma_W^2 = \frac{n(n+1)(2n+1)}{24}, \qquad
+  z = \frac{W - \mu_W}{\sigma_W}.
+\]
+The $z$-score states how many standard deviations the observed $W$ lies below or above its mean under $H_0$. Pairs with $d_i = 0$ are removed and $n$ is reduced accordingly.
+
+\paragraph{Tied absolute differences.} Assign the average of the tied ranks to every tied observation. For each group of $t$ tied ranks, reduce the variance by $(t^3 - t)/48$. The correction affects the variance, and therefore the $z$-score, but not the observed rank sums.
+
+\begin{example}
+Two classifiers $M_1$ and $M_2$ are evaluated on the same 10 folds, with $d_i = M_2 - M_1$.
+\begin{center}
+\small
+\begin{tabular}{lrrrrrrrrrr}
+\toprule
+Fold & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 \\
+\midrule
+$M_1$ & 2.0 & 3.6 & 2.6 & 2.6 & 7.3 & 3.4 & 14.9 & 6.6 & 2.3 & 2.0 \\
+$M_2$ & 3.5 & 5.7 & 2.9 & 2.4 & 9.9 & 3.3 & 16.7 & 6.0 & 3.8 & 4.0 \\
+$d_i$ & $+1.5$ & $+2.1$ & $+0.3$ & $-0.2$ & $+2.6$ & $-0.1$ & $+1.8$ & $-0.6$ & $+1.5$ & $+2.0$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+Ranking $|d_i|$ and restoring the signs:
+\begin{center}
+\small
+\begin{tabular}{lrrrrrrrrrr}
+\toprule
+$|d_i|$ & 0.1 & 0.2 & 0.3 & 0.6 & 1.5 & 1.5 & 1.8 & 2.0 & 2.1 & 2.6 \\
+Rank & 1 & 2 & 3 & 4 & 5.5 & 5.5 & 7 & 8 & 9 & 10 \\
+Sign & $-$ & $-$ & $+$ & $-$ & $+$ & $+$ & $+$ & $+$ & $+$ & $+$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+The signs are attached to the ranks of the absolute differences, not to the original values. The rank sums are
+\[
+  W^- = 1 + 2 + 4 = 7, \qquad W^+ = 3 + 5.5 + 5.5 + 7 + 8 + 9 + 10 = 48,
+\]
+and indeed $W^+ + W^- = 55 = 10 \cdot 11 / 2$. Hence $W = \min(W^+, W^-) = 7$.
+
+Since $n(n+1)/2 = 55 > 20$ we use the normal approximation. There is one group of two tied ranks (the two 1.5), so the variance is reduced by $(2^3 - 2)/48 = 0.125$:
+\[
+  \mu_W = \frac{10 \cdot 11}{4} = 27.5, \qquad
+  \sigma_W^2 = 96.25 - 0.125 = 96.125, \qquad
+  z = \frac{7 - 27.5}{\sqrt{96.125}} = -2.091.
+\]
+The two-sided $p$-value for $|z| = 2.091$ is $p \approx 0.037$. At $\alpha = 0.05$ we reject $H_0$: the results of the two classifiers differ significantly.
+\end{example}
+
+\begin{remark}
+The $p$-value indicates evidence of a difference, not its practical magnitude: report also an effect estimate (e.g.\ the mean or median difference) and its uncertainty.
+\end{remark}

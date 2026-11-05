@@ -86,3 +86,102 @@ The two-sided $p$-value for $|z| = 2.091$ is $p \approx 0.037$. At $\alpha = 0.0
 \begin{remark}
 The $p$-value indicates evidence of a difference, not its practical magnitude: report also an effect estimate (e.g.\ the mean or median difference) and its uncertainty.
 \end{remark}
+
+\subsection{Neural Networks}
+
+\subsubsection{Multilayer feedforward networks}
+
+This is an old but classic architecture. We can identify three types of layer: the input layer, one or more hidden layers and the output layer. The input and output layers have a fixed number of neurons, so our parameters are the number of hidden layers and the number of neurons in each of them. A characteristic of this architecture is that it is \g{fully connected}: every neuron sends its output to each neuron in the next forward layer. The input layer is not counted as a computational layer, since it only passes the values forward; a ``two-layer network'' is therefore a network with one hidden layer and one output layer.
+
+\paragraph{Inside a neuron.} A neuron is made of two parts: a weighted sum of the inputs plus a bias, followed by an activation function $f$:
+\[
+  I_j = \sum_i w_{ij} O_i + \theta_j, \qquad O_j = f(I_j),
+\]
+where $w_{ij}$ is the weight of the connection from unit $i$ of the previous layer to unit $j$, $O_i$ is the output of unit $i$ and $\theta_j$ is the bias of unit $j$.
+
+\begin{center}
+\begin{tikzpicture}[>=Stealth, node distance=1.4cm,
+    unit/.style={draw, circle, minimum size=7mm, inner sep=0pt},
+    box/.style={draw, rounded corners, minimum height=1.2cm, align=center}]
+  \node[unit] (o1) at (0,1.2) {$O_1$};
+  \node[unit] (o2) at (0,0) {$O_2$};
+  \node[unit] (oi) at (0,-1.2) {$O_i$};
+  \node[box] (sum) at (3,0) {weighted\\sum};
+  \node[box, right=1.4cm of sum] (act) {activation\\$f(\cdot)$};
+  \node[unit, right=1.4cm of act] (oj) {$O_j$};
+  \node[above=0.6cm of sum] (bias) {bias $\theta_j$};
+  \draw[->] (o1) -- node[above, sloped, font=\small] {$w_{1j}$} (sum);
+  \draw[->] (o2) -- node[above, font=\small] {$w_{2j}$} (sum);
+  \draw[->] (oi) -- node[below, sloped, font=\small] {$w_{ij}$} (sum);
+  \draw[->] (bias) -- (sum);
+  \draw[->] (sum) -- node[above, font=\small] {$I_j$} (act);
+  \draw[->] (act) -- (oj);
+\end{tikzpicture}
+\end{center}
+
+The activation function should be nonlinear, because if it were linear, stacking layers would still behave like a linear model. A typical choice is the \g{logistic sigmoid}
+\[
+  O_j = \frac{1}{1 + e^{-I_j}},
+\]
+which squashes the output between 0 and 1, useful for probabilities or binary outputs.
+
+\paragraph{Learning.} The parameters to be learned are the weights and the bias of every neuron. Learning is usually long and requires several attempts, because we also need to find the best network structure: basically, we train different neural networks and keep the best one. The parameters need to be initialized, and some initializations may lead to a local optimum instead of the global one, so we need to perform more than one random initialization.
+
+\paragraph{Input representation.} Numeric inputs are typically normalized, for example to $[0,1]$. Discrete and categorical attributes are encoded, usually with \g{one-hot encoding}: there is one input neuron for each attribute value and only one is active at a time. For example, if $A$ has values $\{a_0, a_1, a_2\}$ we use input units $I_0, I_1, I_2$, and the observed value $a_1$ is encoded as $(0, 1, 0)$. This avoids imposing an artificial numerical ordering among the categories.
+
+\paragraph{Classification.} If we want to use a neural network as a classifier, we put one neuron per class in the output layer; the predicted class is the one whose neuron gives the highest output.
+
+\subsubsection{Backpropagation}
+
+One of the most popular approaches to training is \g{backpropagation}: the output predicted by the model is compared with the actual output, the difference is propagated backward through the network, and the weights are modified in order to reduce this difference.
+
+\subsection{Ensemble Methods}
+
+The core idea is to combine multiple learned models to obtain a more reliable one: we learn $k$ models $M_1, \dots, M_k$ and combine their predictions into an improved model $M^*$, using the diversity among the models to reduce errors. There are three popular strategies:
+\begin{itemize}
+    \item \g{Bagging}: average or vote over bootstrap classifiers;
+    \item \g{Boosting}: weighted vote of sequential classifiers;
+    \item \g{Heterogeneous ensembles}: combine different model families.
+\end{itemize}
+
+\begin{example}
+Why do ensembles work? Consider 25 independent binary classifiers, each with error probability $0.35$. The ensemble, using majority voting, is wrong only if 13 or more classifiers are wrong. Let $X \sim \mathrm{Binomial}(25, 0.35)$ be the number of wrong classifiers:
+\[
+  P(\text{ensemble error}) = P(X \ge 13) = \sum_{i=13}^{25} \binom{25}{i}\, 0.35^i\, 0.65^{25-i} \approx 0.060,
+\]
+against $0.35$ of a single classifier. The key assumption is independence: the reduction is large only if the classifiers make different mistakes, and correlated errors reduce the benefit of the ensemble.
+\end{example}
+
+\subsubsection{Bagging}
+
+Bagging (\g{bootstrap aggregation}) trains many models on bootstrap samples and aggregates their predictions. A \g{bootstrap sample} of a dataset $D$ with $d$ tuples is obtained by sampling $d$ tuples from $D$ \emph{with replacement}: some tuples appear several times and others do not appear at all. Bootstrap samples therefore create diverse learners, whose predictions are then combined. The steps are:
+\begin{enumerate}
+    \item create the bootstrap samples: from $D$ with $d$ tuples, sample $d$ tuples with replacement to create each $D_i$;
+    \item train one model per sample: learn a classifier $M_i$ from each bootstrap training set $D_i$, always with the same learning algorithm;
+    \item aggregate the predictions: for classification, count the votes and assign the class with the most votes.
+\end{enumerate}
+
+\begin{center}
+\begin{tikzpicture}[>=Stealth, box/.style={draw, rounded corners, minimum width=2.2cm, minimum height=0.8cm, align=center, font=\small}]
+  \node[box] (D) at (0,0) {Training\\data $D$};
+  \foreach \i/\y in {1/1.6, 2/0, 3/-1.6} {
+    \node[box] (S\i) at (3.4,\y) {bootstrap\\sample $D_\i$};
+    \node[box] (M\i) at (6.6,\y) {classifier\\$M_\i$};
+    \draw[->] (D) -- (S\i);
+    \draw[->] (S\i) -- node[above, font=\scriptsize] {learning} (M\i);
+  }
+  \node[box] (V) at (9.6,0) {vote /\\average};
+  \node[box, right=0.8cm of V] (P) {prediction\\$M^*$};
+  \foreach \i in {1,2,3} { \draw[->] (M\i) -- (V); }
+  \draw[->] (V) -- (P);
+\end{tikzpicture}
+\end{center}
+
+Bagging is useful for both classification and numeric prediction. For the prediction of continuous values we apply all the models to a test tuple and average the predicted values, obtaining a more stable numeric estimate; the variance is reduced through aggregation.
+
+Accuracy and robustness:
+\begin{itemize}
+    \item it is often better than a single classifier learned from $D$;
+    \item it is not considerably worse with noisy data;
+    \item improvements in prediction accuracy have been proven.
+\end{itemize}

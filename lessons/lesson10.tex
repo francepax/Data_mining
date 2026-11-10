@@ -1,0 +1,128 @@
+\section{Lesson 10 --- 10/11/2026}
+
+\subsection{Boosting}
+
+In boosting we don't work in parallel: we learn one classifier at each step, and at each iteration we train a classifier that focuses on the instances misclassified by the previous one. In practice, we do that by assigning a weight to each instance: a high weight means that the instance was misclassified by the previous classifier. For the first classifier the weights are all the same, of course. The final ensemble model combines all the classifiers using a weight per classifier (the higher the weight, the higher the accuracy) and performs a weighted vote.
+
+As an example we will see the algorithm \g{AdaBoost}, which generates $k$ classifiers in $k$ rounds using weighted training tuples. For each classifier the error is the sum of the weights of the misclassified tuples, so mistakes on high-weight tuples count more than mistakes on low-weight tuples:
+\[
+  error(M_i) = \sum_{j=1}^{|D|} w_j \cdot err(X_j),
+\]
+where $err(X_j) = 1$ if tuple $j$ is misclassified, $0$ otherwise. The vote weight of the classifier is
+\[
+  \alpha_i = \log\frac{1 - error(M_i)}{error(M_i)},
+\]
+so the lower the error, the higher the vote weight.
+
+The algorithm, where $k$ is a user-defined number of boosting rounds, works as follows:
+\begin{enumerate}
+  \item \s{Initialize}: set $w_j = 1/|D|$ for all the training tuples.
+  \item \s{Sample and train}: draw a weighted sample $D_i$ and train $M_i$.
+  \item \s{Measure the error}: compute $error(M_i)$ on the weighted training tuples.
+  \item \s{Update the weights}: increase the relative weight of the misclassified tuples (in practice, the weights of the correctly classified tuples are multiplied by $error(M_i)/(1-error(M_i))$) and normalize. Repeat for $k$ rounds.
+  \item \s{Combine}: the final prediction is the class with the largest sum of $\alpha_i$-weighted votes.
+\end{enumerate}
+
+\begin{remark}
+If $error(M_i) > 0.5$ the classifier is worse than random: it is discarded and the round is repeated.
+\end{remark}
+
+Bagging and boosting both aggregate many models, but they generate diversity in different ways.
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+ & Bagging & Boosting \\
+\midrule
+Training sets & resampled datasets & reweighted datasets \\
+Model building & models built in parallel & models built sequentially \\
+Variance / bias & reduces variance & reduces bias and can reduce variance \\
+Risk & generally robust to noise & can overfit noisy or mislabeled cases \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Random forest}
+
+This is one of the most popular ensemble models: the base classifier is a decision tree and we use an ensemble of them. But if the algorithm that creates a decision tree is deterministic, how can we create different decision trees starting from the same data? We need to introduce some difference between the trees. We can either use randomized subsampling (and use the rest of the data to evaluate the tree error), or we can randomly extract a subset of features and use only them to create the tree. For the random forest algorithm pruning is not included: we always grow the trees fully, and pruning is not necessary because the trees compensate each other for overfitting.
+
+The classical algorithm is:
+\begin{enumerate}
+  \item \s{Bootstrap sample}: randomly extract $|D|$ training instances with replacement; the instances not extracted are used to estimate the tree error.
+  \item \s{Random feature subset}: at each node, randomly choose $f$ attributes out of the $F$ available and compute the best split among them only.
+  \item \s{Grow the tree}: each tree is fully grown and not pruned.
+\end{enumerate}
+
+In classification, if we need to predict a class we activate all the decision trees and then choose the majority class.
+
+Advantages of random forests:
+\begin{itemize}
+  \item often very accurate across many data sets;
+  \item efficient on large databases;
+  \item handle thousands of input variables;
+  \item estimate variable importance;
+  \item provide internal error estimates;
+  \item can estimate missing data.
+\end{itemize}
+
+Limitations:
+\begin{itemize}
+  \item they may overfit on some noisy classification or regression datasets;
+  \item when categorical features have different numbers of levels, they can favor the features with more levels, so the feature-importance scores are not always reliable and their interpretation requires caution.
+\end{itemize}
+
+\subsection{Imbalanced datasets}
+
+We already saw the problem of imbalanced datasets when talking about the evaluation of models. We now ask ourselves the following question: does an imbalanced dataset also affect the training phase?
+
+The brief answer is yes, because an imbalanced dataset creates some bias in the models. To solve that we can follow different strategies, such as:
+\begin{itemize}
+  \item \g{Oversampling}: resample the positive (rare) class, so that it weighs more in the training set.
+  \item \g{Undersampling}: reduce the negative (numerous) class by removing some of its tuples.
+  \item \g{Threshold-moving}: adjust the decision threshold $t$ of the classifier, so that it is easier for a tuple to be assigned to the rare class.
+  \item \g{Ensemble techniques}: combine multiple classifiers.
+\end{itemize}
+Multiclass imbalance remains difficult.
+
+One of the most used algorithms in the literature is \g{SMOTE} (synthetic minority over-sampling): the core idea is to oversample the dataset using synthetic samples of the minority class, instead of simply duplicating existing ones. Synthetic samples are placed in the local neighborhood of the already existing minority instances. SMOTE does not create information from scratch: it interpolates between minority samples, so preprocessing and validation must be designed carefully. In particular, synthetic samples must be generated only inside each training fold, not before cross-validation, to avoid data leakage.
+
+\subsubsection{How to choose neighbours}
+
+\begin{enumerate}
+  \item For each minority sample, find its $k$ nearest neighbours among the minority class samples.
+  \item Depending on the desired amount of oversampling, randomly select one or more of them.
+\end{enumerate}
+For example, with $200\%$ oversampling and $k = 5$, we choose two of the five nearest minority neighbours and generate one synthetic point in the direction of each selected neighbour.
+
+\subsubsection{Generating one synthetic sample}
+
+SMOTE interpolates between a minority sample and one of its minority neighbours:
+\begin{enumerate}
+  \item take the difference between the neighbour vector and the current minority sample;
+  \item multiply it by a random value between $0$ and $1$;
+  \item add the result to the current sample.
+\end{enumerate}
+Formally,
+\[
+  x_{new} = x_i + \lambda\,(x_{nn} - x_i),
+\]
+where $\lambda$ is sampled from $U(0,1)$. The new point is therefore a random point on the segment between $x_i$ and $x_{nn}$.
+
+\begin{center}
+\begin{tikzpicture}[>=Stealth]
+  \coordinate (xi) at (0,0);
+  \coordinate (xnn) at (6,3);
+  \draw[dashed] (xi) -- (xnn);
+  \fill (xi) circle (2pt) node[below right] {$x_i$};
+  \fill (xnn) circle (2pt) node[above left] {$x_{nn}$};
+  \foreach \l in {0.23,0.52,0.76} {
+    \node[draw=blue, fill=blue!20, circle, inner sep=1.5pt]
+      at (\l*6, \l*3) {};
+    \node[blue, font=\footnotesize, below right]
+      at (\l*6, \l*3) {$\lambda=\l$};
+  }
+  \draw[->] (-0.5,-1) -- (7,-1) node[right] {feature 1};
+  \draw[->] (-0.5,-1) -- (-0.5,4) node[above] {feature 2};
+\end{tikzpicture}
+\end{center}
+
+New points fill the space between nearby minority samples. This tends to make the minority-class region more general and less dependent on isolated observations. However, synthetic samples may also create ambiguous samples near class overlap, so the data must be inspected and validated carefully.
